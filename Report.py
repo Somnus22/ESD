@@ -1,183 +1,171 @@
+#!/usr/bin/env python3
+import os
+from os import environ
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flasgger import Swagger
-#test
+from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/book'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@host.docker.internal:3306/book'
 
 db = SQLAlchemy(app)
 
-# Initialize flasgger 
-app.config['SWAGGER'] = {
-    'title': 'Book microservice API',
-    'version': 1.0,
-    "openapi": "3.0.2",
-    'description': 'Allows create, retrieve, update, and delete of books'
-}
-swagger = Swagger(app)
+#Create class for Report
+class Reports(db.Model):
+    __tablename__ = 'reports'
 
-class Book(db.Model):
-    __tablename__ = 'book'
+    report_id = db.Column(db.Integer, primary_key=True)
+    car_id = db.Column(db.Integer, nullable=False)
+    report_time = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-    isbn13 = db.Column(db.String(13), primary_key=True)
-    title = db.Column(db.String(64), nullable=False)
-    price = db.Column(db.Float(precision=2), nullable=False)
-    availability = db.Column(db.Integer)
-
-    def __init__(self, isbn13, title, price, availability):
-        self.isbn13 = isbn13
-        self.title = title
-        self.price = price
-        self.availability = availability
+    def __init__(self, report_id, car_id, report_time):
+        self.report_id = report_id
+        self.car_id = car_id
+        self.report_time = report_time
 
     def json(self):
-        return {"isbn13": self.isbn13, "title": self.title, "price": self.price, "availability": self.availability}
+        return {"report_id": self.report_id, "car_id": self.car_id, "report_time": self.report_time}
+    
 
-@app.route("/book")
+#Create class for Damages (Contains multiple rows of the same report for different damage notes)
+class Damages(db.Model):
+    __tablename__ = 'damages'
+
+    report_id = db.Column(db.Integer, db.ForeignKey("reports.report_id") primary_key=True),
+    damage_num = db.Column(db.Integer, primary_key=True)
+    damage_desc = db.Column(db.String(300), nullable = False)
+
+    def __init__(self, report_id, damage_num, damage_desc):
+        self.report_id = report_id
+        self.damage_num = damage_num
+        self.damage_desc = damage_desc
+
+    def json(self):
+        return {"report_id": self.report_id, "damage_num": self.damage_num, "damage_desc": self.damage_desc}
+
+
+
+#Create a new report
+@app.route("/order")
 def get_all():
-    """
-    Get all books
-    ---
-    responses:
-        200:
-            description: Return all books
-        404:
-            description: No books
-    """
-
-    booklist = db.session.scalars(db.select(Book)).all()
-
-    if len(booklist):
+    orderlist = db.session.scalars(db.select(Order)).all()
+    if len(orderlist):
         return jsonify(
             {
                 "code": 200,
                 "data": {
-                    "books": [book.json() for book in booklist]
+                    "orders": [order.json() for order in orderlist]
                 }
             }
         )
     return jsonify(
         {
             "code": 404,
-            "message": "There are no books."
+            "message": "There are no orders."
         }
     ), 404
-   
-@app.route("/book/<string:isbn13>")
-def find_by_isbn13(isbn13):
-    """
-    Get a book by its ISBN13
-    ---
-    parameters:
-        -   in: path
-            name: isbn13
-            required: true
-    responses:
-        200:
-            description: Return the book with the specified ISBN13
-        404:
-            description: No book with the specified ISBN13 found
 
-    """
 
-    book = db.session.scalars(
-        db.select(Book).filter_by(isbn13=isbn13).
-        limit(1)
-    ).first()
-
-    if book:
+@app.route("/order/<string:order_id>")
+def find_by_order_id(order_id):
+    order = db.session.scalars(
+        db.select(Order).filter_by(order_id=order_id).limit(1)).first()
+    if order:
         return jsonify(
             {
                 "code": 200,
-                "data": book.json()
+                "data": order.json()
             }
         )
     return jsonify(
         {
             "code": 404,
-            "message": "Book not found."
+            "data": {
+                "order_id": order_id
+            },
+            "message": "Order not found."
         }
     ), 404
 
-@app.route("/book/<string:isbn13>", methods=['POST'])
-def create_book(isbn13):
-    """
-    Create a book by its ISBN13
-    ---
-    parameters:
-        -   in: path
-            name: isbn13
-            required: true
-    requestBody:
-        description: Book's details
-        required: true
-        content:
-            application/json:
-                schema:
-                    properties:
-                        title: 
-                            type: string
-                            description: Book's title
-                        price: 
-                            type: number
-                            description: Book's price
-                        availability: 
-                            type: integer
-                            description: Number in stock
 
-    responses:
-        201:
-            description: Book created
-        400:
-            description: Book already exists
-        500:
-            description: Internal server error
+@app.route("/order", methods=['POST'])
+def create_order():
+    customer_id = request.json.get('customer_id', None)
+    order = Order(customer_id=customer_id, status='NEW')
 
-    """
-
-    if (db.session.scalars(
-        db.select(Book).filter_by(isbn13=isbn13).
-        limit(1)
-).first()
-):
-        return jsonify(
-            {
-                "code": 400,
-                "data": {
-                    "isbn13": isbn13
-                },
-                "message": "Book already exists."
-            }
-        ), 400
-
-    data = request.get_json()
-    book = Book(isbn13, **data)
+    cart_item = request.json.get('cart_item')
+    for item in cart_item:
+        order.order_item.append(Order_Item(
+            book_id=item['book_id'], quantity=item['quantity']))
 
     try:
-        db.session.add(book)
+        db.session.add(order)
         db.session.commit()
-    except:
+    except Exception as e:
         return jsonify(
             {
                 "code": 500,
-                "data": {
-                    "isbn13": isbn13
-                },
-                "message": "An error occurred creating the book."
+                "message": "An error occurred while creating the order. " + str(e)
             }
         ), 500
 
     return jsonify(
         {
             "code": 201,
-            "data": book.json()
+            "data": order.json()
         }
     ), 201
+
+
+@app.route("/order/<string:order_id>", methods=['PUT'])
+def update_order(order_id):
+    try:
+        order = db.session.scalars(
+        db.select(Order).filter_by(order_id=order_id).
+        limit(1)).first()
+        if not order:
+            return jsonify(
+                {
+                    "code": 404,
+                    "data": {
+                        "order_id": order_id
+                    },
+                    "message": "Order not found."
+                }
+            ), 404
+
+        # update status
+        data = request.get_json()
+        if data['status']:
+            order.status = data['status']
+            db.session.commit()
+            return jsonify(
+                {
+                    "code": 200,
+                    "data": order.json()
+                }
+            ), 200
+    except Exception as e:
+        return jsonify(
+            {
+                "code": 500,
+                "data": {
+                    "order_id": order_id
+                },
+                "message": "An error occurred while updating the order. " + str(e)
+            }
+        ), 500
+
+
+if __name__ == '__main__':
+    print("This is flask for " + os.path.basename(__file__) + ": manage orders ...")
+    app.run(host='0.0.0.0', port=5001, debug=True)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
