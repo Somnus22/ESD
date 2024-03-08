@@ -53,8 +53,10 @@ class Damages(db.Model):
 #Create a new report
 @app.route("/report", methods=['POST'])
 def create_report():
-
-
+#Check if report on the car exists in the reports table
+    if (db.session.scalars(db.select(Reports).filter_by(=isbn13).limit(1)).first()):
+        #create new report for the car in the reports table
+        #create new row in damages for the car
     try:
         db.session.add()
         db.session.commit()
