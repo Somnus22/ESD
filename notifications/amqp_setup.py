@@ -5,7 +5,7 @@ from os import environ
 hostname = "localhost" # default hostname
 port = 5672            # default port
 exchangename = "notifications_exchange" # exchange name
-exchangetype = "direct" # - use a 'topic' exchange to enable interaction
+exchangetype = "topic" # - use a 'topic' exchange to enable interaction
 
 # Instead of hardcoding the values, we can also get them from the environ as shown below
 # hostname = environ.get('hostname') #localhost
@@ -60,14 +60,23 @@ def create_channel(connection):
 #function to create queues
 def create_queues(channel):
     print('amqp_setup:create queues')
-    create_notification_queue(channel)
+    create_request_car_queue(channel)
+    create_available_car_queue(channel)
 
 # function to create Notification queue  
-def create_notification_queue(channel):
-    print('amqp_setup:create_activity_log_queue')
-    n_queue_name = 'Notification'
-    channel.queue_declare(queue=n_queue_name, durable=True) # 'durable' makes the queue survive broker restarts
-    channel.queue_bind(exchange=exchangename, queue=n_queue_name, routing_key='notification')
+def create_request_car_queue(channel):
+    print('amqp_setup:create_request_car_queue')
+    r_queue_name = 'Request_Car'
+    channel.queue_declare(queue=r_queue_name, durable=True) # 'durable' makes the queue survive broker restarts
+    channel.queue_bind(exchange=exchangename, queue=r_queue_name, routing_key='car.request')
+        # bind the queue to the exchange via the key
+        # 'routing_key=#' => any routing_key would be matched
+
+def create_available_car_queue(channel):
+    print('amqp_setup:create_available_car_queue')
+    a_queue_name = 'Available_Car'
+    channel.queue_declare(queue=a_queue_name, durable=True) # 'durable' makes the queue survive broker restarts
+    channel.queue_bind(exchange=exchangename, queue=a_queue_name, routing_key='car.available')
         # bind the queue to the exchange via the key
         # 'routing_key=#' => any routing_key would be matched
     
