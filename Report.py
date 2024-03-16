@@ -1,49 +1,38 @@
 #!/usr/bin/env python3
 import os
-from os import environ
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
-from flasgger import Swagger
+
 from datetime import datetime
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@host.docker.internal:3306/book'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/report'
 
 db = SQLAlchemy(app)
 
 #Create class for Report
-class Reports(db.Model):
-    __tablename__ = 'reports'
-
+class Report(db.Model):
+    __tablename__ = 'report'
     report_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
     car_id = db.Column(db.Integer, nullable=False)
     report_time = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-    def __init__(self, report_id, car_id, report_time):
-        self.report_id = report_id
-        self.car_id = car_id
-        self.report_time = report_time
-
     def json(self):
-        return {"report_id": self.report_id, "car_id": self.car_id, "report_time": self.report_time}
+        return {"report_id": self.report_id, "user_id":self.user_id, "car_id": self.car_id, "report_time": self.report_time}
     
 
 #Create class for Damages (Contains multiple rows of the same report for different damage notes)
-class Damages(db.Model):
-    __tablename__ = 'damages'
-
-    report_id = db.Column(db.Integer, db.ForeignKey("reports.report_id") primary_key=True),
+class Damage(db.Model):
+    __tablename__ = 'damage'
+    report_id = db.Column(db.Integer, db.ForeignKey("report.report_id"), primary_key=True)
     damage_num = db.Column(db.Integer, primary_key=True)
-    damage_desc = db.Column(db.String(300), nullable = False)
+    damage_desc = db.Column(db.String(300), nullable=False)
 
-    def __init__(self, report_id, damage_num, damage_desc):
-        self.report_id = report_id
-        self.damage_num = damage_num
-        self.damage_desc = damage_desc
+    report = db.relationship(
+        'Report', primaryjoin='Report.report_id == Damage.report_id', backref='damage')
 
     def json(self):
         return {"report_id": self.report_id, "damage_num": self.damage_num, "damage_desc": self.damage_desc}
@@ -53,12 +42,21 @@ class Damages(db.Model):
 #Create a new report
 @app.route("/report", methods=['POST'])
 def create_report():
-#Check if report on the car exists in the reports table
-    if (db.session.scalars(db.select(Reports).filter_by(=isbn13).limit(1)).first()):
-        #create new report for the car in the reports table
-        #create new row in damages for the car
+
+    user_id = request.json.get('user_id')
+    car_id = request.json.get('car_id')
+    report = Report(user_id = user_id, car_id = car_id)
+    
+    damages = request.json.get("damages")
+    num = 1
+
+    for x in damages:
+        report.damage.append(Damage(
+            report_id = report.report_id, damage_num = num, damage_desc = x ))
+        num +=1
+
     try:
-        db.session.add()
+        db.session.add(report)
         db.session.commit()
     except Exception as e:
         return jsonify(
@@ -71,17 +69,12 @@ def create_report():
     return jsonify(
         {
             "code": 201,
-            "data": order.json()
+            "data": report.json()
         }
     ), 201
 
 
 if __name__ == '__main__':
-    print("This is flask for " + os.path.basename(__file__) + ": manage orders ...")
-    app.run(host='0.0.0.0', port=5001, debug=True)
-
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(port=5000, debug=True)
 
 
