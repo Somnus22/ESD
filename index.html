@@ -47,7 +47,7 @@
                 </tr>
             </tbody>
         </table>
-        <div v-if="selectedCar && bookedCar == null">
+        <div v-if="selectedCar">
             <h2>Selected Car:</h2>
             <p>Distance: {{ selectedCar.distance }}</p>
             <p>Type: {{ selectedCar.type }}</p>
@@ -55,7 +55,7 @@
             <button v-if="selectedCar.status == 'booked'" @click="requestNotification">Send notification</button> <!-- havent put in vue methods -->
             <button v-else @click="sendDataToMicroservice">Send Data to Microservice</button>
         </div>
-        <div v-else>
+        <div v-if="bookedCar != null && selectedCar">
             <h2>Report</h2>
             <div>
                 <label for="reportDate">Date:</label>
