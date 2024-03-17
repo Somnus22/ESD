@@ -24,20 +24,20 @@ class Cars(db.Model):
     Brand = db.Column(db.String(64),nullable=False)
     Latitude = db.Column(Numeric(precision=10, scale=7))  # Adjust precision and scale as needed
     Longitude = db.Column(Numeric(precision=10, scale=7))  # Adjust precision and scale as needed
-    availability = db.Column(db.Integer, nullable=False)
-    Price = db.Column(Numeric(precision=10, scale=2))
+    Availability = db.Column(db.String(8), nullable=False)
+    Per_Hr_Price = db.Column(Numeric(precision=10, scale=2), nullable=False)
 
-    def __init__(self,Vehicle_Id, Type, Brand, Available, Price,Latitude,Longitude):
-        self.Vehicle_ID = Vehicle_Id
+    def __init__(self, Vehicle_Id, Type, Brand, Latitude, Longitude, Availablity, Per_Hr_Price):
+        self.Vehicle_Id = Vehicle_Id
         self.Type = Type
         self.Brand = Brand
         self.Latitude = Latitude
         self.Longitude = Longitude
-        self.availability = Available
-        self.Price = Price
+        self.Availability = Availablity
+        self.Per_Hr_Price = Per_Hr_Price
 
     def json(self):
-        return {"Vehicle_ID": self.Vehicle_Id, "Type": self.Type, "Brand": self.Brand,"Latitude": self.Latitude, "Longitude": self.Longitude, "Availability": self.availability, "Price": self.Price}
+        return {"Vehicle_Id": self.Vehicle_Id, "Type": self.Type, "Brand": self.Brand,"Latitude": self.Latitude, "Longitude": self.Longitude, "Availability": self.Availability, "Per_Hr_Price": self.Per_Hr_Price}
 
 @app.route("/cars")
 def get_all():
@@ -68,25 +68,15 @@ def find_by_nearest_distance():
         
     if Latitude is not None and Longitude is not None:
         all_cars = db.session.query(Cars).filter_by(
-            availability = 1
+            Availability = "Unbooked"
         ).all()
         if all_cars:
-            all_cars.sort(key=lambda car: haversine(car.Latitude, car.Longitude, Latitude, Longitude))
-            # nearest_car = min(nearest_car, key=lambda car: haversine(car.Latitude, car.Longitude, Latitude, Longitude))
-            # nearest_car_dict = {
-            #     'Vehicle_Id': nearest_car.Vehicle_Id,
-            #     'Type': nearest_car.Type,
-            #     'Brand': nearest_car.Brand,
-            #     'Latitude': nearest_car.Latitude,
-            #     'Longitude': nearest_car.Longitude,
-            #     'availability': nearest_car.availability,
-            #     'Price': str(nearest_car.Price),  # Convert to string or appropriate format
-            # }
+            all_cars.sort(key=lambda car: haversine(car.Latitude, car.Longitude, Latitude, Longitude))    
             return jsonify({"code": 200, "CarList": [car.json() for car in all_cars]})
-        else:
-            return jsonify({"code": 404, "message": "No available cars found"}), 404
-    else:
-        return jsonify({"code": 405, "error": "User location error"})
+        
+        return jsonify({"code": 404, "message": "No available cars found"}), 404
+    
+    return jsonify({"code": 405, "error": "User location error"})
     
 def haversine(lat1, lon1, lat2, lon2):
     """
