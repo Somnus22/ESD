@@ -39,7 +39,7 @@ class RentalLog(db.Model):
 
 @app.route("/rental_log", methods=['POST'])
 def create_rental_log():
-    data = request.get_json();
+    data = request.get_json()
     
     logID = data.get("logID")
     log_entry_time = data.get("logEntryTime")
@@ -69,7 +69,7 @@ def create_rental_log():
 
 @app.route("/rental_logs/<int:logID>", methods=['PUT']) # PUT cuz updating resource
 def cancel_rental_log(logID):
-    rental_log = RentalLogs.query.get(logID)
+    rental_log = RentalLog.query.get(logID)
 
     if rental_log:
         try:

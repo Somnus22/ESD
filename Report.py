@@ -69,7 +69,8 @@ def create_report():
     return jsonify(
         {
             "code": 201,
-            "data": report.json()
+            "data": report.json(),
+            "message": "Report has been submitted"
         }
     ), 201
 
