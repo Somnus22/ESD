@@ -9,11 +9,8 @@ from invokes import invoke_http
 app = Flask(__name__)
 CORS(app)
 
-book_URL = "http://localhost:5000/book"
-order_URL = "http://localhost:5001/order"
-shipping_record_URL = "http://localhost:5002/shipping_record"
-activity_log_URL = "http://localhost:5003/activity_log"
-error_URL = "http://localhost:5004/error"
+report_URL = "http://localhost:5000/report"
+
 
 
 @app.route("/createreport", methods=['POST'])
@@ -22,10 +19,10 @@ def create_report():
     if request.is_json:
         try:
             report = request.get_json()
-            print("\nReceived an order in JSON:", report)
+            print("\nReceived a report in JSON:", report)
 
-            # 1. Invoke report microservice
-            result = processPlaceOrder(order)
+            # 1. Invoke processReportDamage 
+            result = processReportDamage(report)
             return jsonify(result), result["code"]
 
         except Exception as e:
@@ -37,7 +34,7 @@ def create_report():
 
             return jsonify({
                 "code": 500,
-                "message": "place_order.py internal error: " + ex_str
+                "message": "ReportDamage.py internal error: " + ex_str
             }), 500
 
     # if reached here, not a JSON request.
@@ -47,14 +44,14 @@ def create_report():
     }), 400
 
 
-def processPlaceOrder(order):
-    # 2. Send the order info {cart items}
-    # Invoke the order microservice
-    print('\n-----Invoking order microservice-----')
-    order_result = invoke_http(order_URL, method='POST', json=order)
-    print('order_result:', order_result)
+def processReportDamage(report):
+    # 2. Send the report info
+    # Invoke the report microservice
+    print('\n-----Invoking report microservice-----')
+    report_result = invoke_http(report_URL, method='POST', json=report)
+    print('report_result:', report_result)
 
-    # 4. Record new order
+    # 4. Update car status as "Damaged" in car inventory
     # record the activity log anyway
     print('\n\n-----Invoking activity_log microservice-----')
     invoke_http(activity_log_URL, method="POST", json=order_result)

@@ -82,4 +82,3 @@ def processRentalLog(rental_data):
 if __name__ == "__main__":
     print("This is flask " + os.path.basename(__file__) + ": handling rental log entries ...")
     app.run(host='0.0.0.0', port=5000, debug=True)
-    
