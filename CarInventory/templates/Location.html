@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get User Location</title>
+</head>
+<body>
+    <button onclick="getLocation()">Get My Location</button>
+    
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var latitude = position.coords.latitude;
+                    var longitude = position.coords.longitude;
+                    
+                    // Store latitude and longitude in session storage
+                    sessionStorage.setItem('latitude', latitude);
+                    sessionStorage.setItem('longitude', longitude);
+                    
+                    // Send the information to your backend server
+                    sendLocation(latitude, longitude);
+                }, showError);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function sendLocation(latitude, longitude) {
+
+            var storedLatitude = sessionStorage.getItem('latitude');
+            var storedLongitude = sessionStorage.getItem('longitude');
+
+            // Now you have the latitude and longitude
+            // You can send this information to your backend server using AJAX
+            // Here's a basic example using XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/cars/location?latitude=" + latitude + "&longitude=" + longitude, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    handleResponse();
+                    // Handle response here
+                }
+            };
+            xhr.send();
+        }
+        function handleResponse(response) {
+            if (response.code === 200) {
+                // Car found, handle the response
+                var car = response.Car;
+                console.log("Nearest car:", car);
+                // Process the car data as needed
+            } else if (response.code === 404) {
+                // No car found, display error message
+                var errorMessage = response.message;
+                console.error("Error:", errorMessage);
+                // Display error message to the user
+            } else {
+                // Handle other response codes or unexpected data
+                console.error("Unexpected response:", response);
+            }
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>

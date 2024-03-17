@@ -18,29 +18,26 @@ USE `report`;
 -- Table structure for table `Report`
 --
 
-DROP TABLE IF EXISTS `reports`;
-CREATE TABLE IF NOT EXISTS `reports` (
-  `report_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+DROP TABLE IF EXISTS `report`;
+CREATE TABLE IF NOT EXISTS `report` (
+  `report_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
   `car_id` int(11) NOT NULL,
   `report_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`report_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `order_item`
+-- Table structure for table `Damage`
 --
 
-DROP TABLE IF EXISTS `damages`;
-CREATE TABLE IF NOT EXISTS `damages` (
-  `report_id` int(11),
-  `damage_num` int(11) NOT NULL AUTO_INCREMENT,
-  `damage_desc` varchar(300) NOT NULL,
-  PRIMARY KEY (`report_id`, `damage_num`),
-  FOREIGN KEY (`report_id`) REFERENCES Reports(`report_id`)
+DROP TABLE IF EXISTS damage;
+CREATE TABLE IF NOT EXISTS damage (
+  report_id int(11) NOT NULL,
+  damage_num int(11) NOT NULL,
+  damage_desc varchar(300) NOT NULL,
+  PRIMARY KEY (report_id, damage_num),
+  FOREIGN KEY (report_id) REFERENCES report(report_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
-
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue.js and Axios Example</title>
+    <!-- Include Vue.js -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <!-- Include Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>Vue.js and Axios Example</h1>
+        <div>
+            <label for="distance">Distance:</label>
+            <select id="distance" v-model="distanceSortOrder">
+                <option value="ascending">Ascending</option>
+                <option value="descending">Descending</option>
+            </select>
+            <label for="type">Type:</label>
+            <select id="type" v-model="selectedType">
+                <option v-for="type in typeOptions" :value="type">{{ type }}</option>
+            </select>
+            <label for="status">Status:</label>
+            <select id="status" v-model="selectedStatus">
+                <option v-for="status in statusOptions" :value="status">{{ status }}</option>
+            </select>
+            <button @click="fetchData">Search for Car</button>
+            <button @click="resetFilters">Reset Filters</button>
+        </div>
+        <hr>
+        <table v-if="showList">
+            <thead>
+                <tr>
+                    <th>Distance</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="item in filteredData" :key="item.id">
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.email }}</td>
+                    <td><button @click="selectCar(item)">Select</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <div v-if="selectedCar">
+            <h2>Selected Car:</h2>
+            <p>Distance: {{ selectedCar.distance }}</p>
+            <p>Type: {{ selectedCar.type }}</p>
+            <p>Status: {{ selectedCar.status }}</p>
+            <button v-if="selectedCar.status == 'booked'" @click="requestNotification">Send notification</button> <!-- havent put in vue methods -->
+            <button v-else @click="sendDataToMicroservice">Send Data to Microservice</button>
+        </div>
+        <div v-if="bookedCar != null && selectedCar">
+            <h2>Report</h2>
+            <div>
+                <label for="reportDate">Date:</label>
+                <input type="date" id="reportDate" v-model="reportDate">
+            </div>
+            <div>
+                <label for="damageDescription">Damage Description:</label>
+                <textarea id="damageDescription" v-model="damageDescription"></textarea>
+            </div>
+            <button @click="reportCar">Report Car</button>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                data: [],
+                userId: '1', // assume we know userId
+                selectedType: '',
+                selectedStatus: '',
+                distanceSortOrder: 'ascending',
+                typeOptions: [],
+                statusOptions: [],
+                showList: false,
+                selectedCar: null,
+                bookedCar: null,
+                reportDate: '',
+                damageDescription: ''
+            },
+            computed: {
+                filteredData() {
+                    let filtered = this.data;
+
+                    // Apply type and status filters
+                    if (this.selectedType) {
+                        filtered = filtered.filter(item => item.type === this.selectedType);
+                    }
+                    if (this.selectedStatus) {
+                        filtered = filtered.filter(item => item.status === this.selectedStatus);
+                    }
+
+                    // Apply distance sorting
+                    if (this.distanceSortOrder === 'ascending') {
+                        filtered.sort((a, b) => a.distance - b.distance);
+                    } else {
+                        filtered.sort((a, b) => b.distance - a.distance);
+                    }
+
+                    return filtered;
+                }
+            },
+
+            methods: {
+                fetchData() {
+                // Get user's location using Geolocation API
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+
+                        // Make GET request to your API endpoint with user's location
+                        axios.get(`https://your-api-endpoint.com/data?latitude=${latitude}&longitude=${longitude}`)
+                            .then(response => {
+                                this.data = response.data;
+                                this.extractOptions();
+                                this.showList = true; // Show the list after fetching data
+                            })
+                            .catch(error => {
+                                console.error('There was an error!', error);
+                            });
+                    }, error => {
+                        console.error('Error getting user location:', error);
+                    });
+                } else {
+                    console.error('Geolocation is not supported by this browser.');
+                }
+            },
+                extractOptions() {
+                    this.typeOptions = [...new Set(this.data.map(item => item.type))];
+                    this.statusOptions = [...new Set(this.data.map(item => item.status))];
+                },
+                selectCar(car) {
+                    this.selectedCar = car;
+                },
+                sendDataToMicroservice() {
+                    // if only want car id and user id
+                    // const toSend = {
+                    //  userId : this.userId
+                    //  carId : this.selectedCar.id
+                    //}
+                    axios.post('https://your-microservice-endpoint.com/data', this.selectedCar)
+                        .then(response => {
+                            alert("Car booked");
+                            this.bookedCar = selectedCar;
+                            console.log('Data sent to microservice:', response.data);
+                            // Optionally, you can reset selectedCar here
+                        })
+                        .catch(error => {
+                            console.error('Error sending data to microservice:', error);
+                        });
+                },
+                resetFilters() {
+                    this.selectedType = '';
+                    this.selectedStatus = '';
+                    this.distanceSortOrder = 'ascending';
+                },
+                requestNotification(){
+                    //not done yet
+                },
+                reportCar() {
+                    // Validate date and damage description
+                    if (!this.reportDate || !this.damageDescription) {
+                        alert('Please provide both date and damage description.');
+                        return;
+                    }
+
+                    // Construct report data
+                    const reportData = {
+                        userId : this.userId,
+                        car: this.bookedCar, //can change 
+                        date: this.reportDate,
+                        damageDescription: this.damageDescription
+                    };
+
+                    // Make POST request to report car
+                    axios.post('https://your-microservice-endpoint.com/report', reportData)
+                        .then(response => {
+                            alert("Car reported successfully");
+                            console.log('Reported car data:', response.data);
+                            // Optionally, you can reset reportDate and damageDescription here
+                            this.reportDate = '';
+                            this.damageDescription = '';
+                        })
+                        .catch(error => {
+                            console.error('Error reporting car:', error);
+                        });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+  
+
