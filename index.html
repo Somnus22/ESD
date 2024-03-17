@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,7 +48,7 @@
                 </tr>
             </tbody>
         </table>
-        <div v-if="selectedCar">
+        <div v-if="selectedCar && bookedCar == null">
             <h2>Selected Car:</h2>
             <p>Distance: {{ selectedCar.distance }}</p>
             <p>Type: {{ selectedCar.type }}</p>
@@ -55,7 +56,7 @@
             <button v-if="selectedCar.status == 'booked'" @click="requestNotification">Send notification</button> <!-- havent put in vue methods -->
             <button v-else @click="sendDataToMicroservice">Send Data to Microservice</button>
         </div>
-        <div v-if="bookedCar != null && selectedCar">
+        <div v-else>
             <h2>Report</h2>
             <div>
                 <label for="reportDate">Date:</label>
@@ -114,26 +115,44 @@
                 // Get user's location using Geolocation API
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(position => {
-                        const latitude = position.coords.latitude;
-                        const longitude = position.coords.longitude;
-
-                        // Make GET request to your API endpoint with user's location
-                        axios.get(`https://your-api-endpoint.com/data?latitude=${latitude}&longitude=${longitude}`)
-                            .then(response => {
-                                this.data = response.data;
-                                this.extractOptions();
-                                this.showList = true; // Show the list after fetching data
-                            })
-                            .catch(error => {
-                                console.error('There was an error!', error);
-                            });
-                    }, error => {
-                        console.error('Error getting user location:', error);
-                    });
-                } else {
-                    console.error('Geolocation is not supported by this browser.');
+                        var xhr = new XMLHttpRequest();
+                        xhr.open("POST", "http://localhost:5001/findNearestCars");
+                        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                        xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
+                        xhr.onreadystatechange = function () {
+                            if (xhr.readyState === 4 && xhr.status === 200) {
+                                console.log("Location sent successfully");
+                            }
+                        };
+                        console.log(position)
+                        xhr.send(JSON.stringify({
+                            "lat": position.coords.latitude,
+                            "long": position.coords.longitude
+                        }));
+                    })
                 }
             },
+                //         // Make GET request to your API endpoint with user's location
+                //         axios.post("http://localhost:5001/findNearestCars/", data, {headers: 
+                //             {"Access-Control-Allow-Origin": "*",
+                //             "Content-Type" : "application/json;charset=UTF-8"
+                //         }
+                //         })
+                //             .then(response => {
+                //                 this.data = response.data;
+                //                 this.extractOptions();
+                //                 this.showList = true; // Show the list after fetching data
+                //             })
+                //             .catch(error => {
+                //                 console.error('There was an error!', error);
+                //             });
+                //     }, error => {
+                //         console.error('Error getting user location:', error);
+                //     });
+                // } else {
+                //     console.error('Geolocation is not supported by this browser.');
+                // }
+            // },
                 extractOptions() {
                     this.typeOptions = [...new Set(this.data.map(item => item.type))];
                     this.statusOptions = [...new Set(this.data.map(item => item.status))];
@@ -199,10 +218,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-  
-
