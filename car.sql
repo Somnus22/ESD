@@ -17,3 +17,4 @@ INSERT INTO Cars (Vehicle_Id, Type, Brand, Availability, Per_Hr_Price, Latitude,
 ('4', 'SEDAN', 'MITSUBISHI', "Unbooked", 6.50, 34.0522000, -118.2437000),
 ('5', 'SUV', 'MAZDA', "Damaged", 7.90),
 ('6', 'SUV', 'AUDI', "Booked", 9.60);
+
