@@ -1,14 +1,35 @@
 #!/usr/bin/env python3
-# The above shebang (#!) operator tells Unix-like environments
-# to run this file as a python3 script
+
 
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+
+
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
 
+app = Flask(__name__)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/report'
+
+db = SQLAlchemy(app)
+
+class Rental_log(db.Model):
+    __tablename__ = 'rental_log'
+    log_id = db.Column(db.Integer, primary_key=True)
+    log_entry_time = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    vehicle_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(10), nullable=False)
+
+    def json(self):
+        return {"log_id": self.log_id, "log_entry_time":self.log_entry_time, "vehicle_id": self.vehicle_id, "user_id": self.user_id,"status":self.status}
+    
 @app.route("/rental_log", methods=['POST'])
 def createRentalLog():
     # JSON data validation

@@ -2,11 +2,12 @@ SET time_zone = '+08:00';
 DROP TABLE IF EXISTS 'rental log';
 
 CREATE TABLE IF NOT EXISTS 'rental_log' (
-    'LogID' INT PRIMARY KEY,
-    'LogEntryTime' TIMESTAMP NOT NULL CURRENT_TIMESTAMP,
-    'LogEntryDesc' VARCHAR(255) NOT NULL,
-    'CarID' INT,  
-    'UserID' INT, 
+    'Log_ID' INT PRIMARY KEY,
+    'Log_Entry_Time' TIMESTAMP NOT NULL CURRENT_TIMESTAMP,
+    'Log_Entry_Desc' VARCHAR(255) NOT NULL,
+    'Vehicle_ID' INT,  
+    'User_ID' INT, 
+    `Status` varchar(10) NOT NULL DEFAULT 'NEW',
     FOREIGN KEY (CarID) REFERENCES car(CarID),
     FOREIGN KEY (UserID) REFERENCES users(userID)
 ); 
