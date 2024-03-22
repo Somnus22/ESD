@@ -1,7 +1,7 @@
 -- Create table to store car information
 CREATE TABLE Cars (
     Vehicle_Id INT PRIMARY KEY,
-    Type VARCHAR(64),
+    Car_Type VARCHAR(64),
     Brand VARCHAR(64),
     Latitude DECIMAL(10,7),
     Longitude DECIMAL(10,7),
@@ -10,11 +10,11 @@ CREATE TABLE Cars (
 );
 
 -- Insert data into the table
-INSERT INTO Cars (Vehicle_Id, Type, Brand, Availability, Per_Hr_Price, Latitude, Longitude) VALUES
+INSERT INTO Cars (Vehicle_Id, Car_Type, Brand, Availability, Per_Hr_Price, Latitude, Longitude) VALUES
 ('1', 'SUV', 'MERCEDES', "Unbooked", 10.10, 1.3525000, 103.9447000),
-('2', 'SEDAN', 'MERCEDES', "Booked", 8.30),
-('3', 'SUV', 'MITSUBISHI', "Unbooked", 7.50, 1.0000000, 104.0000000);
+('2', 'SEDAN', 'MERCEDES', "Booked", 8.30,40.7128000, -74.0060000),
+('3', 'SUV', 'MITSUBISHI', "Unbooked", 7.50, 1.0000000, 104.0000000),
 ('4', 'SEDAN', 'MITSUBISHI', "Unbooked", 6.50, 34.0522000, -118.2437000),
-('5', 'SUV', 'MAZDA', "Damaged", 7.90),
-('6', 'SUV', 'AUDI', "Booked", 9.60);
+('5', 'SUV', 'MAZDA', "Damaged", 7.90,1.0000000, 103.0000000),
+('6', 'SUV', 'AUDI', "Booked", 9.60,34.0522000, -118.2437000);
 

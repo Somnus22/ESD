@@ -17,7 +17,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 class Cars(db.Model):
-    __tablename__ = 'cars'
+    __tablename__ = 'Cars'
 
     Vehicle_Id = db.Column(db.Integer, primary_key=True)
     Type = db.Column(db.String(64), nullable=False)
@@ -59,6 +59,7 @@ def get_all():
         }
     ), 404
 
+
 @app.route("/cars/locationNearMe", methods = ["GET"])
 def find_by_nearest_distance():
     data = request.get_json()
@@ -97,71 +98,86 @@ def haversine(lat1, lon1, lat2, lon2):
     return distance
 
 
-# @app.route("/cars/available", methods=['GET'])
-# def availability():
-#     if request.method == 'GET':
-#         available_cars = Car.query.filter_by(availability=1).all()
-#         if available_cars:
-#             good_message = "Available cars retrieved successfully."
+@app.route("/cars/available")
+def availability():
+    if request.method == 'GET':
+        available_cars = Cars.query.filter_by(availability=1).all()
+        if available_cars:
+            good_message = "Available cars retrieved successfully."
             
-#             return jsonify({
-#                 "code": 200,
-#                 "data": {"Cars": [car.json() for car in available_cars]},
-#                 "message": good_message
-#             }), 200
-#         else:
-#             error_message =  "No available cars."
-#             send_message_to_queue(error_message)
-#             return jsonify({"code": 404, "message":error_message}), 404
+            return jsonify({
+                "code": 200,
+                "data": {"Cars": [car.json() for car in available_cars]},
+                "message": good_message
+            }), 200
+        else:
+            error_message =  "No available cars."
+            send_message_to_queue(error_message)
+            return jsonify({"code": 404, "message":error_message}), 404
 
+@app.route("/cars/book", methods = ["PUT"])
+def book_car():
+    data = request.json
+    car_id = data.get('Vehicle_Id')
+    # Assuming you have a user identifier or some data to associate with the booking
+    # How to know if the car is used by someone 
+    user_id = data.get('userID')
 
+    car = Cars.query.filter_by(id=car_id, availability=1).first()
+    if car:
+        car.availability = 0  # Mark as unavailable
+        # Here you can also create a booking record associating the car with the user_id if needed
+        db.session.commit()
+        return jsonify({"code": 200, "message": "Car booked successfully."}), 200
+    else:
+        return jsonify({"code": 404, "message": "Car not available or does not exist."}), 404
 
-# def send_message_to_queue(message):
-#     if(message[0] == "Available"):
-#         connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-#         channel = connection.channel()
-#         channel.queue_declare(queue='Available_Car')  # Create a queue named 'error_queue'
-#         channel.basic_publish(exchange='', routing_key='Available_Car', body=message)
-#         print("Sent message to :", message)
-#         connection.close()
-#     else:
-#         connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-#         channel = connection.channel()
-#         channel.queue_declare(queue='error_msg')  # Create a queue named 'error_queue'
-#         channel.basic_publish(exchange='', routing_key='error_msg', body=message)
-#         print("Sent message to error_queue:", message)
-#         connection.close()
+def send_message_to_queue(message):
+    if(message[0] == "Available"):
+        connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        channel = connection.channel()
+        channel.queue_declare(queue='Available_Car')  # Create a queue named 'error_queue'
+        channel.basic_publish(exchange='', routing_key='Available_Car', body=message)
+        print("Sent message to :", message)
+        connection.close()
+    else:
+        connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        channel = connection.channel()
+        channel.queue_declare(queue='error_msg')  # Create a queue named 'error_queue'
+        channel.basic_publish(exchange='', routing_key='error_msg', body=message)
+        print("Sent message to error_queue:", message)
+        connection.close()
 
-# # Instead of hardcoding the values, we can also get them from the environ as shown below
-# # a_queue_name = environ.get('Activity_Log') #Activity_Log
-# r_queue_name = 'Request_Car'
-# a_queue_name = 'Available_Car'
-# exchangename = "notifications_exchange"
-# exchangetype = "topic"
+# Instead of hardcoding the values, we can also get them from the environ as shown below
+# a_queue_name = environ.get('Activity_Log') #Activity_Log
+r_queue_name = 'Request_Car'
+a_queue_name = 'Available_Car'
+exchangename = "notifications_exchange"
+exchangetype = "topic"
 
-# def receiveNotifications(channel):
+def receiveNotifications(channel):
     
-#     try:
-#         # set up a consumer and start to wait for coming messages
-#         channel.basic_consume(queue=r_queue_name, on_message_callback=callback, auto_ack=True)
-#         print('Notifications: Consuming from queue:', r_queue_name)
-#         channel.start_consuming()  # an implicit loop waiting to receive messages;
-#             #it doesn't exit by default. Use Ctrl+C in the command window to terminate it.
+    try:
+        # set up a consumer and start to wait for coming messages
+        channel.basic_consume(queue=r_queue_name, on_message_callback=callback, auto_ack=True)
+        print('Notifications: Consuming from queue:', r_queue_name)
+        channel.start_consuming()  # an implicit loop waiting to receive messages;
+            #it doesn't exit by default. Use Ctrl+C in the command window to terminate it.
     
-#     except pika.exceptions.AMQPError as e:
-#         print(f"Notifications: Failed to connect: {e}") # might encounter error if the exchange or the queue is not created
+    except pika.exceptions.AMQPError as e:
+        print(f"Notifications: Failed to connect: {e}") # might encounter error if the exchange or the queue is not created
 
-#     except KeyboardInterrupt:
-#         print("Notifications: Program interrupted by user.") 
+    except KeyboardInterrupt:
+        print("Notifications: Program interrupted by user.") 
 
-# def callback(channel, method, properties, body): # required signature for the callback; no return
-#     print("\nNotifications: Received a Notification by " + __file__)
-#     processNotifications(json.loads(body))
-#     print()
+def callback(channel, method, properties, body): # required signature for the callback; no return
+    print("\nNotifications: Received a Notification by " + __file__)
+    processNotifications(json.loads(body))
+    print()
     
-# def processNotifications(notifications):
-#     print("Notifications: Recording notifications:")
-#     print(notifications)
+def processNotifications(notifications):
+    print("Notifications: Recording notifications:")
+    print(notifications)
     
 
 if __name__ == '__main__':
