@@ -11,7 +11,7 @@ from sqlalchemy import Numeric, asc, func
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/esd'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/cars'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -38,7 +38,8 @@ class Cars(db.Model):
 
     def json(self):
         return {"Vehicle_Id": self.Vehicle_Id, "Type": self.Type, "Brand": self.Brand,"Latitude": self.Latitude, "Longitude": self.Longitude, "Availability": self.Availability, "Per_Hr_Price": self.Per_Hr_Price}
-
+    
+# get all cars
 @app.route("/cars")
 def get_all():
     carList = db.session.scalars(db.select(Cars)).all()
@@ -59,6 +60,7 @@ def get_all():
         }
     ), 404
 
+# get cars near user location
 @app.route("/cars/locationNearMe", methods = ["GET"])
 def find_by_nearest_distance():
     data = request.get_json()
@@ -77,6 +79,46 @@ def find_by_nearest_distance():
         return jsonify({"code": 404, "message": "No available cars found"}), 404
     
     return jsonify({"code": 405, "error": "User location error"})
+
+# update car availability status as "damaged"
+@app.route("/cars/<int:Vehicle_Id>", methods=['PUT'])
+def update_availability(vehicle_id):
+    try:
+        car = db.session.scalars(
+        db.select(Cars).filter_by(Vehicle_Id=vehicle_id).
+        limit(1)).first()
+        if not car:
+            return jsonify(
+                {
+                    "code": 404,
+                    "data": {
+                        "Vehicle_id": vehicle_id
+                    },
+                    "message": "Vehicle not found."
+                }
+            ), 404
+
+        # update availability
+        data = request.get_json()
+        car.Availability = "Damaged"
+        db.session.commit()
+        return jsonify(
+            {
+                "code": 200,
+                "data": car.json()
+            }
+        ), 200
+    except Exception as e:
+        return jsonify(
+            {
+                "code": 500,
+                "data": {
+                    "Vehicle_Id": vehicle_id,
+                    "Availability": "Damaged"
+                },
+                "message": "An error occurred while updating the order. " + str(e)
+            }
+        ), 500
     
 def haversine(lat1, lon1, lat2, lon2):
     """

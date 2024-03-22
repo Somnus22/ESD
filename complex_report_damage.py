@@ -10,10 +10,10 @@ app = Flask(__name__)
 CORS(app)
 
 report_URL = "http://localhost:5000/report"
+car_inventory_URL = ""
 
 
-
-@app.route("/createreport", methods=['POST'])
+@app.route("/create_report", methods=['POST'])
 def create_report():
     # Simple check of input format and data of the request are JSON
     if request.is_json:
@@ -21,9 +21,9 @@ def create_report():
             report = request.get_json()
             print("\nReceived a report in JSON:", report)
 
-            # 1. Invoke processReportDamage 
-            result = processReportDamage(report)
-            return jsonify(result), result["code"]
+            # Invoke processReportDamage 
+            create_report_result = processReportDamage(report)
+            return jsonify(create_report_result), create_report_result["code"]
 
         except Exception as e:
             # Unexpected error in code
@@ -45,15 +45,14 @@ def create_report():
 
 
 def processReportDamage(report):
-    # 2. Send the report info
+    #Send the report info
     # Invoke the report microservice
     print('\n-----Invoking report microservice-----')
     report_result = invoke_http(report_URL, method='POST', json=report)
     print('report_result:', report_result)
 
-    # 4. Update car status as "Damaged" in car inventory
-    # record the activity log anyway
-    print('\n\n-----Invoking activity_log microservice-----')
+    # Update car status as "Damaged" in car inventory
+    print('\n\n-----Invoking car inventory microservice-----')
     invoke_http(activity_log_URL, method="POST", json=order_result)
     print("\nOrder sent to activity log.\n")
     # - reply from the invocation is not used;
@@ -120,7 +119,7 @@ def processReportDamage(report):
 if __name__ == "__main__":
     print("This is flask " + os.path.basename(__file__) +
           " for placing an order...")
-    app.run(host="0.0.0.0", port=5100, debug=True)
+    app.run(host="0.0.0.0", port=5102, debug=True)
     # Notes for the parameters:
     # - debug=True will reload the program automatically if a change is detected;
     #   -- it in fact starts two instances of the same flask program,

@@ -15,20 +15,20 @@ CORS(app)
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/report'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/rental_log'
 
 db = SQLAlchemy(app)
 
 class Rental_log(db.Model):
     __tablename__ = 'rental_log'
-    log_id = db.Column(db.Integer, primary_key=True)
-    log_entry_time = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    vehicle_id = db.Column(db.Integer, nullable=False)
-    user_id = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String(10), nullable=False)
+    Log_Id = db.Column(db.Integer, primary_key=True)
+    Log_Entry_Time = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    Vehicle_Id = db.Column(db.Integer, nullable=False)
+    User_Id = db.Column(db.Integer, nullable=False)
+    Status = db.Column(db.String(10), nullable=False)
 
     def json(self):
-        return {"log_id": self.log_id, "log_entry_time":self.log_entry_time, "vehicle_id": self.vehicle_id, "user_id": self.user_id,"status":self.status}
+        return {"Log_Id": self.Log_Id, "Log_Entry_Time":self.Log_Entry_Time, "Vehicle_Id": self.Vehicle_Id, "User_Id": self.User_Id,"Status":self.Status}
     
 @app.route("/rental_log", methods=['POST'])
 def createRentalLog():
@@ -102,4 +102,4 @@ def processRentalLog(rental_data):
 # Execute this program only if it is run as a script (not by 'import')
 if __name__ == "__main__":
     print("This is flask " + os.path.basename(__file__) + ": handling rental log entries ...")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=True)
