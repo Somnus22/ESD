@@ -9,8 +9,8 @@ SET time_zone = '+08:00';
 
 -- Database: `Report`
 --
-CREATE DATABASE IF NOT EXISTS `report` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-USE `report`;
+CREATE DATABASE IF NOT EXISTS `Report` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE `Report`;
 
 -- --------------------------------------------------------
 

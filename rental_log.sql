@@ -1,5 +1,8 @@
+CREATE DATABASE IF NOT EXISTS `Rental_Log` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE `Rental_Log`;
+
 SET time_zone = '+08:00';
-DROP TABLE IF EXISTS 'rental log';
+DROP TABLE IF EXISTS 'rental_log';
 
 CREATE TABLE IF NOT EXISTS 'rental_log' (
     'Log_ID' INT PRIMARY KEY,
@@ -8,6 +11,4 @@ CREATE TABLE IF NOT EXISTS 'rental_log' (
     'Vehicle_ID' INT,  
     'User_ID' INT, 
     `Status` varchar(10) NOT NULL DEFAULT 'NEW',
-    FOREIGN KEY (CarID) REFERENCES car(CarID),
-    FOREIGN KEY (UserID) REFERENCES users(userID)
 ); 
