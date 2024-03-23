@@ -44,7 +44,7 @@ class Damage(db.Model):
 def create_report():
 
     user_id = request.json.get('user_id')
-    vehicle_id = request.json.get('car_id')
+    vehicle_id = request.json.get('vehicle_id')
     report = Report(user_id = user_id, vehicle_id = vehicle_id)
     
     damages = request.json.get("damages")
