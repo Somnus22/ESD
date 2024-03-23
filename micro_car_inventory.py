@@ -81,7 +81,7 @@ def find_by_nearest_distance():
     return jsonify({"code": 405, "error": "User location error"})
 
 # update car availability status as "damaged"
-@app.route("/cars/<int:Vehicle_Id>", methods=['PUT'])
+@app.route("/cars/<vehicle_id>", methods=['PUT'])
 def update_availability(vehicle_id):
     try:
         car = db.session.scalars(

@@ -9,8 +9,8 @@ from invokes import invoke_http
 app = Flask(__name__)
 CORS(app)
 
-report_URL = "http://localhost:5000/report"
-car_inventory_URL = ""
+report_URL = "http://localhost:5003/report"
+car_inventory_URL = "http://localhost:5000/cars"
 
 
 @app.route("/create_report", methods=['POST'])
@@ -20,7 +20,6 @@ def create_report():
         try:
             report = request.get_json()
             print("\nReceived a report in JSON:", report)
-
             # Invoke processReportDamage 
             create_report_result = processReportDamage(report)
             return jsonify(create_report_result), create_report_result["code"]
@@ -34,7 +33,7 @@ def create_report():
 
             return jsonify({
                 "code": 500,
-                "message": "ReportDamage.py internal error: " + ex_str
+                "message": "complex_report_damage.py internal error: " + ex_str
             }), 500
 
     # if reached here, not a JSON request.
@@ -50,69 +49,13 @@ def processReportDamage(report):
     print('\n-----Invoking report microservice-----')
     report_result = invoke_http(report_URL, method='POST', json=report)
     print('report_result:', report_result)
-
     # Update car status as "Damaged" in car inventory
     print('\n\n-----Invoking car inventory microservice-----')
-    invoke_http(activity_log_URL, method="POST", json=order_result)
-    print("\nOrder sent to activity log.\n")
-    # - reply from the invocation is not used;
-    # continue even if this invocation fails
+    update_result = invoke_http(car_inventory_URL +'/' + report['vehicle_id'] , method="PUT", json = report['vehicle_id'])
+    print('update_result:', update_result)
 
-    # Check the order result; if a failure, send it to the error microservice.
-    code = order_result["code"]
-    if code not in range(200, 300):
+    print("\nUpdated car availability to 'Damaged'.\n")
 
-        # Inform the error microservice
-        print('\n\n-----Invoking error microservice as order fails-----')
-        invoke_http(error_URL, method="POST", json=order_result)
-        # - reply from the invocation is not used; 
-        # continue even if this invocation fails
-        print("Order status ({:d}) sent to the error microservice:".format(
-            code), order_result)
-
-        # 7. Return error
-        return {
-            "code": 500,
-            "data": {"order_result": order_result},
-            "message": "Order creation failure sent for error handling."
-        }
-
-    # 5. Send new order to shipping
-    # Invoke the shipping record microservice
-    print('\n\n-----Invoking shipping_record microservice-----')
-    shipping_result = invoke_http(
-        shipping_record_URL, method="POST", json=order_result['data'])
-    print("shipping_result:", shipping_result, '\n')
-
-    # Check the shipping result; 
-    # if a failure, send it to the error microservice.
-    code = shipping_result["code"]
-    if code not in range(200, 300):
-
-        # Inform the error microservice
-        print('\n\n-----Invoking error microservice as shipping fails-----')
-        invoke_http(error_URL, method="POST", json=shipping_result)
-        print("Shipping status ({:d}) sent to the error microservice:".format(
-            code), shipping_result)
-
-        # 7. Return error
-        return {
-            "code": 400,
-            "data": {
-                "order_result": order_result,
-                "shipping_result": shipping_result
-            },
-            "message": "Simulated shipping record error sent for error handling."
-        }
-
-    # 7. Return created order, shipping record
-    return {
-        "code": 201,
-        "data": {
-            "order_result": order_result,
-            "shipping_result": shipping_result
-        }
-    }
 
 
 # Execute this program if it is run as a main script (not by 'import')
