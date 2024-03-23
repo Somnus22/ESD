@@ -11,8 +11,9 @@ CORS(app)
 
 report_URL = "http://localhost:5003/report"
 car_inventory_URL = "http://localhost:5000/cars"
+rental_log_URL = "http://localhost:5002/rental_log"
 
-
+#create report
 @app.route("/create_report", methods=['POST'])
 def create_report():
     # Simple check of input format and data of the request are JSON
@@ -45,16 +46,53 @@ def create_report():
 
 def processReportDamage(report):
     #Send the report info
+    
     # Invoke the report microservice
     print('\n-----Invoking report microservice-----')
     report_result = invoke_http(report_URL, method='POST', json=report)
     print('report_result:', report_result)
+    
     # Update car status as "Damaged" in car inventory
     print('\n\n-----Invoking car inventory microservice-----')
     update_result = invoke_http(car_inventory_URL +'/' + report['vehicle_id'] , method="PUT", json = report['vehicle_id'])
     print('update_result:', update_result)
-
     print("\nUpdated car availability to 'Damaged'.\n")
+
+#cancel booking
+@app.route("/cancel", methods=['POST'])
+def cancel():
+    # Simple check of input format and data of the request are JSON
+    if request.is_json:
+        try:
+            cancel = request.get_json()
+            # Invoke update_rental_log
+            update_log_result = update_rental_log(cancel)
+            return jsonify(update_log_result), update_log_result["code"]
+
+        except Exception as e:
+            # Unexpected error in code
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            ex_str = str(e) + " at " + str(exc_type) + ": " + fname + ": line " + str(exc_tb.tb_lineno)
+            print(ex_str)
+
+            return jsonify({
+                "code": 500,
+                "message": "complex_report_damage.py internal error: " + ex_str
+            }), 500
+
+    # if reached here, not a JSON request.
+    return jsonify({
+        "code": 400,
+        "message": "Invalid JSON input: " + str(request.get_data())
+    }), 400
+
+def update_rental_log(report):
+
+    # Invoke the rental log microservice
+    print('\n-----Invoking rental log microservice-----')
+    rental_log_result = invoke_http(rental_log_URL + "/" + report['vehicle_id'], method='PUT', json=report['vehicle_id'])
+    print('rental_log_result:', rental_log_result)
 
 
 
