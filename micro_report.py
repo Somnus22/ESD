@@ -17,11 +17,11 @@ class Report(db.Model):
     __tablename__ = 'report'
     report_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
-    car_id = db.Column(db.Integer, nullable=False)
+    vehicle_id = db.Column(db.Integer, nullable=False)
     report_time = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
     def json(self):
-        return {"report_id": self.report_id, "user_id":self.user_id, "car_id": self.car_id, "report_time": self.report_time}
+        return {"report_id": self.report_id, "user_id":self.user_id, "vehicle_id": self.vehicle_id, "report_time": self.report_time}
     
 
 #Create class for Damages (Contains multiple rows of the same report for different damage notes)
@@ -44,8 +44,8 @@ class Damage(db.Model):
 def create_report():
 
     user_id = request.json.get('user_id')
-    car_id = request.json.get('car_id')
-    report = Report(user_id = user_id, car_id = car_id)
+    vehicle_id = request.json.get('vehicle_id')
+    report = Report(user_id = user_id, vehicle_id = vehicle_id)
     
     damages = request.json.get("damages")
     num = 1
@@ -69,12 +69,13 @@ def create_report():
     return jsonify(
         {
             "code": 201,
-            "data": report.json()
+            "data": report.json(),
+            "message": "Report has been submitted"
         }
     ), 201
 
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5003, debug=True)
 
 
