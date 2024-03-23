@@ -99,7 +99,6 @@ def update_availability(vehicle_id):
             ), 404
 
         # update availability
-        data = request.get_json()
         car.Availability = "Damaged"
         db.session.commit()
         return jsonify(
