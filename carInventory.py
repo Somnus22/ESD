@@ -1,6 +1,9 @@
 from decimal import Decimal
 import json
-from flask import Flask, request, jsonify,render_template
+import logging
+import threading
+import time
+from flask import Flask, request, jsonify,render_template,current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import pika
@@ -12,7 +15,7 @@ from sqlalchemy import Numeric, asc, func
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/esd'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:root@localhost:8889/Cars'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -21,7 +24,7 @@ class Cars(db.Model):
     __tablename__ = 'Cars'
 
     Vehicle_Id = db.Column(db.Integer, primary_key=True)
-    Type = db.Column(db.String(64), nullable=False)
+    CarType = db.Column(db.String(64), nullable=False)
     Brand = db.Column(db.String(64),nullable=False)
     Model = db.Column(db.String(64))
     Latitude = db.Column(Numeric(precision=10, scale=7))  # Adjust precision and scale as needed
@@ -29,9 +32,9 @@ class Cars(db.Model):
     Availability = db.Column(db.String(8), nullable=False)
     Per_Hr_Price = db.Column(Numeric(precision=10, scale=2), nullable=False)
 
-    def __init__(self, Vehicle_Id, Type, Brand,Model, Latitude, Longitude, Availablity, Per_Hr_Price):
+    def __init__(self, Vehicle_Id, CarType, Brand,Model, Latitude, Longitude, Availablity, Per_Hr_Price):
         self.Vehicle_Id = Vehicle_Id
-        self.Type = Type
+        self.CarType = CarType
         self.Brand = Brand
         self.Model = Model
         self.Latitude = Latitude
@@ -40,7 +43,7 @@ class Cars(db.Model):
         self.Per_Hr_Price = Per_Hr_Price
 
     def json(self):
-        return {"Vehicle_Id": self.Vehicle_Id, "Type": self.Type, "Brand": self.Brand, "Model": self.Model,"Latitude": self.Latitude, "Longitude": self.Longitude, "Availability": self.Availability, "Per_Hr_Price": self.Per_Hr_Price}
+        return {"Vehicle_Id": self.Vehicle_Id, "CarType": self.CarType, "Brand": self.Brand, "Model": self.Model,"Latitude": self.Latitude, "Longitude": self.Longitude, "Availability": self.Availability, "Per_Hr_Price": self.Per_Hr_Price}
 
 @app.route("/cars")
 def get_all():
@@ -156,7 +159,7 @@ def book_car():
     #book cars based on the type 
         if Latitude is not None and Longitude is not None:
             all_cars = db.session.query(Cars).filter_by(
-                Type = data['type']
+                CarType = data['type']
             ).all()
             if all_cars:
                 sorted_cars = sorted(all_cars, key=lambda car: haversine(car.Latitude, car.Longitude, Latitude, Longitude))
@@ -177,22 +180,53 @@ def book_car():
                     send_message_to_queue(bad_message)
                     return jsonify({"code": 404, "message": bad_message}), 404
                 
+                
+def background_task(app,car_id, user_id):
+    with app.app_context():
+        logging.basicConfig(level=logging.INFO)
+        try:
+            while True:
+                
+                message = {
+                        'car_id': car_id,
+                        'user_id': user_id,
+                        'message': "A user is waiting for car availability."
+                }
+                logging.info(f"Sending message: {message}")
+                send_message_to_queue(json.dumps(message))
+                
+                time.sleep(60)  # Sleep for 60 seconds
+        except Exception as e:
+            logging.error(f"Error in background task: {str(e)}")
+        
 #Wait for car availability, if user wants a particular car
 @app.route("/cars/waitForAvailability", methods=["POST"])
 def wait_for_availability():
     data = request.get_json()
-    car_id = data.get('car_id')
+    car_id = data['Vehicle_Id']
     user_id = data.get('User_ID')  # Assuming contact is the way to notify the user
 
     # Message you want to send to the queue
-    message = {
-        'car_id': car_id,
-        'user_id': user_id,
-        'message': "A user is waiting for car availability."
-    }
-    send_message_to_queue(json.dumps(message))
+    # message = {
+    #     'car_id': car_id,
+    #     'user_id': user_id,
+    #     'message': "A user is waiting for car availability."
+    # }
+    reservedCar = db.session.query(Cars).filter_by(
+                Vehicle_Id = car_id
+        ).first()
+    
+    if(reservedCar.Availability == "Booked"):
+        thread = threading.Thread(target=background_task, args=(current_app._get_current_object(),car_id, user_id))
+        thread.daemon = True  # Daemonize thread
+        thread.start()
+        message = "You've been added to the waiting list. We will notify you when the car becomes available."
+    else:
+        message = "Car is available."
 
-    return jsonify({"message": "You've been added to the waiting list. We will notify you when the car becomes available."}), 200
+    return jsonify({"message": message}), 200
+    
+
 
 
 def send_message_to_queue(message):
