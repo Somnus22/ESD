@@ -70,17 +70,23 @@
             <button v-else @click="bookCar">Book Car</button>
         </div>
         <!--If car selected and booked for report-->
-        <div v-if="selectedCar && bookedCar != null">
-            <h2>Report</h2>
-            <div>
-                <label for="reportDate">Date:</label>
-                <input type="date" id="reportDate" v-model="reportDate">
+        <div v-if="selectedCar && bookedCar != null && reportMade == false" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+            <h2 style="margin-bottom: 15px;">Report</h2>
+            <div style="margin-bottom: 15px;">
+                <label for="reportDate" style="display: block; margin-bottom: 5px;">Date:</label>
+                <input type="date" id="reportDate" v-model="reportDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
             </div>
-            <div>
-                <label for="damageDescription">Damage Description:</label>
-                <textarea id="damageDescription" v-model="damageDescription"></textarea>
+            <div style="margin-bottom: 15px;">
+                <label for="damageDescription" style="display: block; margin-bottom: 5px;">Damage Description:</label>
+                <textarea id="damageDescription" v-model="damageDescription" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; resize: vertical;"></textarea>
             </div>
-            <button @click="reportCar">Report Car</button>
+            <button @click="reportCar" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Report Car</button>
+        </div>
+        <div v-if="reportMade == true" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+            <h2 style="margin-bottom: 15px;">Report</h2>
+            <div>Report sent! Would you like to cancel your booking?</div>
+            
+            <button @click="cancelBooking" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Cancel Booking</button>
         </div>
     </div>
 
@@ -101,7 +107,8 @@
                 selectedCar: null,
                 bookedCar: null,
                 reportDate: '',
-                damageDescription: ''
+                damageDescription: '',
+                reportMade: false
             },
             computed: {
                 filteredData() {
@@ -220,7 +227,7 @@
                     // Construct report data
                     const reportData = {
                         user_id: this.userId,
-                        car_id: selectedCar.Vehicle_Id,
+                        vehicle_id: this.bookedCar.Vehicle_Id,
                         date: this.reportDate,
                         damages: [this.damageDescription]
                     };
@@ -230,13 +237,31 @@
                         .then(response => {
                             alert("Car reported successfully");
                             console.log('Reported car data:', response.data);
-                            // Optionally, you can reset reportDate and damageDescription here
+      
                             this.reportDate = '';
                             this.damageDescription = '';
+                            this.reportMade = true;
                         })
                         .catch(error => {
                             console.error('Error reporting car:', error);
                         });
+                },
+                //cancel booking after report is created
+                cancelBooking(){
+                    const report = {
+                        vehicle_id: this.bookedCar.Vehicle_Id,
+                    }
+                    axios.post('http://localhost:5000/cancel', report)
+                        .then(response => {
+                            alert("Car booking cancelled");
+                            console.log('Cancelled:', response.data);
+                            this.bookedCar = null;
+                            this.reportMade = false;
+                        })
+                        .catch(error => {
+                            console.error('Error cancelling booking:', error);
+                        });
+
                 }
             }
         });
