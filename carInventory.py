@@ -59,12 +59,14 @@ def get_all():
         }
     ), 404
 
-
+#returning the cars that are close to me 
+#for car search
 @app.route("/cars/locationNearMe", methods = ["GET"])
 def find_by_nearest_distance():
     data = request.get_json()
     Latitude = data['lat']
     Longitude = data['long']
+    # car_type = data.get('type') 
     
         
     if Latitude is not None and Longitude is not None:
@@ -98,10 +100,12 @@ def haversine(lat1, lon1, lat2, lon2):
     return distance
 
 
+#returning cars that are available
+
 @app.route("/cars/available")
 def availability():
     if request.method == 'GET':
-        available_cars = Cars.query.filter_by(availability=1).all()
+        available_cars = Cars.query.filter_by(Availability="Unbooked").all()
         if available_cars:
             good_message = "Available cars retrieved successfully."
             
@@ -115,22 +119,61 @@ def availability():
             send_message_to_queue(error_message)
             return jsonify({"code": 404, "message":error_message}), 404
 
+
+#receive notification that they want to book the car based on distance
+#Car rental
 @app.route("/cars/book", methods = ["PUT"])
 def book_car():
-    data = request.json
-    car_id = data.get('Vehicle_Id')
-    # Assuming you have a user identifier or some data to associate with the booking
-    # How to know if the car is used by someone 
-    user_id = data.get('userID')
+    data = request.get_json()
+    Latitude = data['lat']
+    Longitude = data['long']
+    car_type = data.get('type', "")  # Default to empty string if 'type' not in data
 
-    car = Cars.query.filter_by(id=car_id, availability=1).first()
-    if car:
-        car.availability = 0  # Mark as unavailable
-        # Here you can also create a booking record associating the car with the user_id if needed
-        db.session.commit()
-        return jsonify({"code": 200, "message": "Car booked successfully."}), 200
+    
+    #book whatever cars first     
+    if car_type == "":
+        if Latitude is not None and Longitude is not None:
+            all_cars = db.session.query(Cars).filter_by(
+                Availability = "Unbooked"
+            ).all()
+            if all_cars:
+                sorted_cars = sorted(all_cars, key=lambda car: haversine(car.Latitude, car.Longitude, Latitude, Longitude))
+                first_car = sorted_cars[0]
+                if first_car:
+                    all_cars.availability = "Booked"
+                    db.session.commit()
+                    good_message =  "Car booked successfully."
+                    send_message_to_queue(good_message)
+                    return jsonify({"code": 200, "message": good_message}), 200
+                else:
+                    bad_message =  "Car not available or does not exist."
+                    send_message_to_queue(bad_message)
+                    return jsonify({"code": 404, "message": bad_message}), 404
     else:
-        return jsonify({"code": 404, "message": "Car not available or does not exist."}), 404
+    #book cars based on the type 
+        if Latitude is not None and Longitude is not None:
+            all_cars = db.session.query(Cars).filter_by(
+                Type = data['type']
+            ).all()
+            if all_cars:
+                sorted_cars = sorted(all_cars, key=lambda car: haversine(car.Latitude, car.Longitude, Latitude, Longitude))
+                car_id = data.get('car_id')
+                matched_car  = None
+                for car in sorted_cars:
+                    if car.Vehicle_Id == car_id:  # Assuming the car object has an 'id' attribute that holds its ID
+                        matched_car = car
+                        break
+                if matched_car:
+                    matched_car.availability = "Booked"
+                    db.session.commit()
+                    good_message =  "Car booked successfully."
+                    send_message_to_queue(good_message)
+                    return jsonify({"code": 200, "message":good_message}), 200
+                else:
+                    bad_message =  "Car not available or does not exist."
+                    send_message_to_queue(bad_message)
+                    return jsonify({"code": 404, "message": bad_message}), 404
+        
 
 def send_message_to_queue(message):
     if(message[0] == "Available"):
@@ -163,6 +206,8 @@ def receiveNotifications(channel):
         print('Notifications: Consuming from queue:', r_queue_name)
         channel.start_consuming()  # an implicit loop waiting to receive messages;
             #it doesn't exit by default. Use Ctrl+C in the command window to terminate it.
+        if(r_queue_name == "Request_Car"):
+            book_car(r_queue_name)
     
     except pika.exceptions.AMQPError as e:
         print(f"Notifications: Failed to connect: {e}") # might encounter error if the exchange or the queue is not created

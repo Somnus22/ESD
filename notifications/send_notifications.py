@@ -42,5 +42,5 @@ def send_notification():
             return jsonify({"error": str(e)}), 500
 if __name__ == "__main__":  # execute this program only if it is run as a script (not by 'import')
     print("This is flask " + os.path.basename(__file__) + " for placing an order...")
-    app.run(host="0.0.0.0", port=5100)
+    app.run(host="0.0.0.0", port=5101)
     

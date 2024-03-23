@@ -10,7 +10,7 @@ import os, sys
 r_queue_name = 'Request_Car'
 a_queue_name = 'Available_Car'
 exchangename = "notifications_exchange"
-exchangetype="topic"
+exchangetype = "topic"
 
 # Instead of hardcoding the values, we can also get them from the environ as shown below
 # a_queue_name = environ.get('Activity_Log') #Activity_Log

@@ -27,11 +27,11 @@ function calcRoute(){
     let request = {
         origin:document.getElementById("from").value,
         destination:document.getElementById("to").value,
-        travelMode: google.maps.TravelMode.DRIVING,
+        travelMode: google.maps.TravelMode.DRIVING
     }
 
     directionService.route(request, function(result,status){
-        if(status == google.maps.DirectionStatus.OK){
+        if(status == google.maps.DirectionsStatus.OK){
             const output = document.querySelector("#output");
             output.innerHTML = 
             "<div class='alert alert-info'> From: " + 
