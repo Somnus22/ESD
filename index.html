@@ -12,13 +12,15 @@
 </head>
 <body>
     <div id="app">
-        <h1>Vue.js and Axios Example</h1>
+        <h1>Book Car</h1>
+        <!--Filters-->
         <div>
-            <label for="distance">Distance:</label>
-            <select id="distance" v-model="distanceSortOrder">
+            <label for="price">Distance:</label>
+            <select id="price" v-model="priceSortOrder">
                 <option value="ascending">Ascending</option>
                 <option value="descending">Descending</option>
             </select>
+
             <label for="type">Type:</label>
             <select id="type" v-model="selectedType">
                 <option v-for="type in typeOptions" :value="type">{{ type }}</option>
@@ -27,36 +29,48 @@
             <select id="status" v-model="selectedStatus">
                 <option v-for="status in statusOptions" :value="status">{{ status }}</option>
             </select>
+            <label for="brand">Brand:</label>
+            <select id="brand" v-model="selectedBrand">
+                <option v-for="brand in brandOptions" :value="type">{{ brand }}</option>
+            </select>
+
             <button @click="fetchData">Search for Car</button>
             <button @click="resetFilters">Reset Filters</button>
         </div>
         <hr>
         <table v-if="showList">
+            <!--Table of cars-->
             <thead>
                 <tr>
-                    <th>Distance</th>
                     <th>Type</th>
-                    <th>Status</th>
+                    <th>Brand</th>
+                    <th>Availability</th>
+                    <th>Per_Hr_Price</th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="item in filteredData" :key="item.id">
                     <td>{{ item.id }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.email }}</td>
+                    <td>{{ item.Type }}</td>
+                    <td>{{ item.Brand }}</td>
+                    <td>{{ item.Availability }}</td>
+                    <td>{{ item.Per_Hr_Price }}</td>
                     <td><button @click="selectCar(item)">Select</button></td>
                 </tr>
             </tbody>
         </table>
+        <!--If car selected-->
         <div v-if="selectedCar && bookedCar == null">
             <h2>Selected Car:</h2>
-            <p>Distance: {{ selectedCar.distance }}</p>
-            <p>Type: {{ selectedCar.type }}</p>
-            <p>Status: {{ selectedCar.status }}</p>
-            <button v-if="selectedCar.status == 'booked'" @click="requestNotification">Send notification</button> <!-- havent put in vue methods -->
-            <button v-else @click="sendDataToMicroservice">Send Data to Microservice</button>
+            <p>Type: {{ selectedCar.Type }}</p>
+            <p>Type: {{ selectedCar.Brand }}</p>
+            <p>Type: {{ selectedCar.Per_Hr_Price }}</p>
+            <p>Status: {{ selectedCar.Availability }}</p>
+            <button v-if="selectedCar.status == 'Booked'" @click="requestNotification">Send notification</button> <!-- havent put in vue methods -->
+            <button v-else @click="bookCar">Book Car</button>
         </div>
-        <div v-else>
+        <!--If car selected and booked for report-->
+        <div v-if="selectedCar && bookedCar != null">
             <h2>Report</h2>
             <div>
                 <label for="reportDate">Date:</label>
@@ -78,9 +92,11 @@
                 userId: '1', // assume we know userId
                 selectedType: '',
                 selectedStatus: '',
-                distanceSortOrder: 'ascending',
+                selectedBrand: '',
+                priceSortOrder: 'ascending',
                 typeOptions: [],
                 statusOptions: [],
+                brandOptions: [],
                 showList: false,
                 selectedCar: null,
                 bookedCar: null,
@@ -93,35 +109,45 @@
 
                     // Apply type and status filters
                     if (this.selectedType) {
-                        filtered = filtered.filter(item => item.type === this.selectedType);
+                        filtered = filtered.filter(item => item.Type === this.selectedType);
                     }
                     if (this.selectedStatus) {
-                        filtered = filtered.filter(item => item.status === this.selectedStatus);
+                        filtered = filtered.filter(item => item.Availability === this.selectedStatus);
+                    }
+                    if (this.selectedBrand) {
+                        filtered = filtered.filter(item => item.Brand === this.selectedBrand);
+                    }
+                    // Apply distance sorting
+                    if (this.priceSortOrder === 'ascending') {
+                        filtered.sort((a, b) => a.Per_Hr_Price - b.Per_Hr_Price);
+                    } else {
+                        filtered.sort((a, b) => b.Per_Hr_Price - a.Per_Hr_Price);
                     }
 
-                    // Apply distance sorting
-                    if (this.distanceSortOrder === 'ascending') {
-                        filtered.sort((a, b) => a.distance - b.distance);
-                    } else {
-                        filtered.sort((a, b) => b.distance - a.distance);
-                    }
+
+
 
                     return filtered;
                 }
             },
 
             methods: {
+                //Search for cars
                 fetchData() {
                 // Get user's location using Geolocation API
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(position => {
                         var xhr = new XMLHttpRequest();
-                        xhr.open("POST", "http://localhost:5001/findNearestCars");
+                        xhr.open("POST", "http://localhost:5000/findNearestCars");
                         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                         xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
                         xhr.onreadystatechange = function () {
                             if (xhr.readyState === 4 && xhr.status === 200) {
                                 console.log("Location sent successfully");
+                                // data
+                                this.data = xhr.responseText.cars;
+                                this.extractOptions();
+                                this.showList = true; // Show the list after fetching data                                
                             }
                         };
                         console.log(position)
@@ -154,18 +180,15 @@
                 // }
             // },
                 extractOptions() {
-                    this.typeOptions = [...new Set(this.data.map(item => item.type))];
-                    this.statusOptions = [...new Set(this.data.map(item => item.status))];
+                    this.typeOptions = [...new Set(this.data.map(item => item.Type))];
+                    this.statusOptions = [...new Set(this.data.map(item => item.Availability))];
+                    this.brandOptions = [...new Set(this.data.map(item => item.Brand))];
                 },
                 selectCar(car) {
                     this.selectedCar = car;
                 },
-                sendDataToMicroservice() {
-                    // if only want car id and user id
-                    // const toSend = {
-                    //  userId : this.userId
-                    //  carId : this.selectedCar.id
-                    //}
+                //book car
+                bookCar() {
                     axios.post('https://your-microservice-endpoint.com/data', this.selectedCar)
                         .then(response => {
                             alert("Car booked");
@@ -180,7 +203,9 @@
                 resetFilters() {
                     this.selectedType = '';
                     this.selectedStatus = '';
-                    this.distanceSortOrder = 'ascending';
+                    this.selectedBrand = '';
+                    this.priceSortOrder = 'ascending';
+                    
                 },
                 requestNotification(){
                     //not done yet
@@ -194,14 +219,14 @@
 
                     // Construct report data
                     const reportData = {
-                        userId : this.userId,
-                        car: this.bookedCar, //can change 
+                        user_id: this.userId,
+                        car_id: selectedCar.Vehicle_Id,
                         date: this.reportDate,
-                        damageDescription: this.damageDescription
+                        damages: [this.damageDescription]
                     };
 
                     // Make POST request to report car
-                    axios.post('https://your-microservice-endpoint.com/report', reportData)
+                    axios.post('http://localhost:5000/report', reportData)
                         .then(response => {
                             alert("Car reported successfully");
                             console.log('Reported car data:', response.data);
