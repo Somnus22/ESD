@@ -143,11 +143,11 @@ def book_car():
                     all_cars.availability = "Booked"
                     db.session.commit()
                     good_message =  "Car booked successfully."
-                    send_message_to_queue(good_message)
-                    return jsonify({"code": 200, "message": good_message}), 200
+                    # send_message_to_queue(good_message)
+                    return jsonify({"code": 200, "message": good_message, "Longitude": first_car.Longitude, "Latitude": first_car.Latitude}, 200)
                 else:
                     bad_message =  "Car not available or does not exist."
-                    send_message_to_queue(bad_message)
+                    # send_message_to_queue(bad_message)
                     return jsonify({"code": 404, "message": bad_message}), 404
     else:
     #book cars based on the type 
@@ -173,7 +173,20 @@ def book_car():
                     bad_message =  "Car not available or does not exist."
                     send_message_to_queue(bad_message)
                     return jsonify({"code": 404, "message": bad_message}), 404
+                
+#Wait for car availability, if user wants a particular car
+@app.route("cars/waitForAvailability", methods = ["POST"])
+def waitforAvailability():
+    data = request.get_json()
+    Latitude = data['lat']
+    Longitude = data['long']
+    car_id = data['car_id']
+    want_car = db.session.query(Cars).filter_by(
+                Vehicle_Id = car_id
+    )
+    if(want_car.availability == "Booked"):
         
+
 
 def send_message_to_queue(message):
     if(message[0] == "Available"):
