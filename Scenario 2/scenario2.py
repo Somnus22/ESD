@@ -13,9 +13,9 @@ import json
 app = Flask(__name__)
 CORS(app)
 
-user_URL = "http://localhost:5000/user"
-car_inventory_URL = "http://localhost:5000/shipping_record"
-rental_log_URL = "http://localhost:5000/rental_log"
+user_URL = "http://localhost:5001/user"
+car_inventory_URL = "http://localhost:5000/"
+rental_log_URL = "http://localhost:5002/rental_log"
 
 @app.route("/car_rental", methods=['POST'])
 def car_rental():
@@ -42,7 +42,7 @@ def car_rental():
 
             return jsonify({
                 "code": 500,
-                "message": "place_order.py internal error: " + ex_str
+                "message": "car_rental.py internal error: " + ex_str
             }), 500
 
     # if reached here, not a JSON request.
