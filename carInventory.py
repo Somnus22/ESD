@@ -227,7 +227,44 @@ def wait_for_availability():
     return jsonify({"message": message}), 200
     
 
+# update car availability status as "damaged"
+@app.route("/cars/<vehicle_id>", methods=['PUT'])
+def update_availability(vehicle_id):
+    try:
+        car = db.session.scalars(
+        db.select(Cars).filter_by(Vehicle_Id=vehicle_id).
+        limit(1)).first()
+        if not car:
+            return jsonify(
+                {
+                    "code": 404,
+                    "data": {
+                        "Vehicle_id": vehicle_id
+                    },
+                    "message": "Vehicle not found."
+                }
+            ), 404
 
+        # update availability
+        car.Availability = "Damaged"
+        db.session.commit()
+        return jsonify(
+            {
+                "code": 200,
+                "data": car.json()
+            }
+        ), 200
+    except Exception as e:
+        return jsonify(
+            {
+                "code": 500,
+                "data": {
+                    "Vehicle_Id": vehicle_id,
+                    "Availability": "Damaged"
+                },
+                "message": "An error occurred while updating the order. " + str(e)
+            }
+        ), 500
 
 def send_message_to_queue(message):
     try:
