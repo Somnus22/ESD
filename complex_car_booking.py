@@ -13,9 +13,9 @@ import json
 app = Flask(__name__)
 CORS(app)
 
-user_URL = "http://localhost:5000/user"
-car_inventory_URL = "http://localhost:5000/shipping_record"
-rental_log_URL = "http://localhost:5000/rental_log"
+user_URL = "http://localhost:5001/user"
+car_inventory_URL = "http://localhost:5000/cars"
+rental_log_URL = "http://localhost:5002/rental_log"
 
 @app.route("/car_rental", methods=['POST'])
 def car_rental():
