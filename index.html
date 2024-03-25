@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vue.js and Axios Example</title>
+    <title>Jom Let's Go</title>
     <!-- Include Vue.js -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
     <!-- Include Axios -->
@@ -14,11 +14,29 @@
 </head>
 <body class="m-0">
     <div id="app">
-        <div style="height: 10vh; background-color: lightgreen;" class="p-3">
-            <h2>Car Search</h2>
-        </div>
+        <nav class="navbar navbar-expand-lg" style="background-color: lightblue;">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="#">JomLet'sGo</a>
+              <div class="vr me-2"></div>
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                  <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Car Search</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link active" href="#">Report</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link active" href="#">Booking details</a>
+                  </li>
+              </div>
+            </div>
+          </nav>
         <div class="ps-3 pt-3">
-            <button class="btn btn-primary rounded-pill" @click="searchForNearestCar">Find a car now</button>
+            <button class="btn btn-primary" @click="searchForNearestCar">Search for car</button> <!--v-if="!carsList"-->
         </div>
         <hr>
         <div class="ps-3 pt-1 mb-4" v-if="carsList && !selectedCar">
@@ -93,7 +111,7 @@
                         <td>{{ car.Per_Hr_Price }}</td>
                         <td>{{ car.Latitude }}</td>
                         <td>{{ car.Longitude }}</td>
-                        <td><button class="btn btn-success" @click="selectedCar = car">Select</button></td>
+                        <td><button class="btn btn-success" @click="selectedCar = car; bookedCar = car">Select</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -114,7 +132,7 @@
             <button class="btn btn-primary mt-2" v-else @click="bookCar">Book car</button>
         </div>
         <!--If car selected and booked for report-->
-        <div v-if="selectedCar && bookedCar != null && reportMade == false" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+        <div v-if="selectedCar && bookedCar != null && reportMade == false" style="padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
             <h2 style="margin-bottom: 15px;">Report</h2>
             <div style="margin-bottom: 15px;">
                 <label for="reportDate" style="display: block; margin-bottom: 5px;">Date:</label>
@@ -129,7 +147,7 @@
         <div v-if="reportMade == true" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: 20px;">
             <h2 style="margin-bottom: 15px;">Report</h2>
             <div>Report sent! Would you like to cancel your booking?</div>
-            
+
             <button @click="cancelBooking" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Cancel Booking</button>
         </div>
     </div>
@@ -292,7 +310,6 @@
                         alert('Please provide both date and damage description.');
                         return;
                     }
-
                     // Construct report data
                     const reportData = {
                         user_id: this.userId,
@@ -300,13 +317,11 @@
                         date: this.reportDate,
                         damages: [this.damageDescription]
                     };
-
                     // Make POST request to report car
-                    axios.post('http://localhost:5000/report', reportData)
+                    axios.post('http://localhost:5102/create_report', reportData)
                         .then(response => {
                             alert("Car reported successfully");
                             console.log('Reported car data:', response.data);
-      
                             this.reportDate = '';
                             this.damageDescription = '';
                             this.reportMade = true;
@@ -320,7 +335,7 @@
                     const report = {
                         vehicle_id: this.bookedCar.Vehicle_Id,
                     }
-                    axios.post('http://localhost:5000/cancel', report)
+                    axios.post('http://localhost:5102/cancel', report)
                         .then(response => {
                             alert("Car booking cancelled");
                             console.log('Cancelled:', response.data);
