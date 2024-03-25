@@ -40,10 +40,6 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-    volumes: 
-      - ./rabbitmq.config:/etc/rabbitmq/rabbitmq.config
-      - ./rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json
-      - rabbitmq_data:/var/lib/rabbitmq
       
   #################################################
   # Report
@@ -60,7 +56,7 @@ services:
   ###################################
   # Users
   ###################################
-  error:
+  users:
     build:
       context: ./
       dockerfile: users.Dockerfile
@@ -72,23 +68,23 @@ services:
   ###############################################
   # Complex Car Search
   ###############################################
-  car_search:
+  car_booking:
     build:
       context: ./
-      dockerfile: car_search.Dockerfile
-    image: car_search:project
+      dockerfile: car_booking.Dockerfile
+    image: car_booking:project
     restart: always
     depends_on:
-      - order
-      - shipping_record
-      - activity_log
-      - error
+      - users
+      - car
+      - rental_log
       - rabbitmq
     environment:
       rabbit_host: rabbitmq
       rabbit_port: 5672
-      order_URL: http://order:5001/order
-      shipping_record_URL: http://shipping_record:5002/shipping_record 
+      user_URL: http://localhost:5001/user
+      car_inventory_URL: http://localhost:5000/cars
+      rental_log_URL: http://localhost:5002/rental_log
       PYTHONUNBUFFERED: 1
     ports:
       - "5100:5100"
