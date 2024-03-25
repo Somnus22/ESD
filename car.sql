@@ -1,7 +1,6 @@
 CREATE DATABASE IF NOT EXISTS `Cars` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 USE `Cars`;
 
-
 -- Create table to store car information
 CREATE TABLE Cars (
     Vehicle_Id INT PRIMARY KEY,
