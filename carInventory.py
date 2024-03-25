@@ -9,8 +9,9 @@ from flask_cors import CORS
 import pika
 import amqp_connection
 import math
+from sqlalchemy import event
 
-from sqlalchemy import Numeric, asc, func
+from sqlalchemy import Engine, Numeric, asc, func
 
 app = Flask(__name__)
 CORS(app)
@@ -181,30 +182,25 @@ def book_car():
                     return jsonify({"code": 404, "message": bad_message}), 404
                 
                 
-def background_task(app,car_id, user_id):
-    with app.app_context():
-        logging.basicConfig(level=logging.INFO)
-        try:
-            while True:
-                
-                message = {
-                        'car_id': car_id,
-                        'user_id': user_id,
-                        'message': "A user is waiting for car availability."
-                }
-                logging.info(f"Sending message: {message}")
-                send_message_to_queue(json.dumps(message))
-                
-                time.sleep(60)  # Sleep for 60 seconds
-        except Exception as e:
-            logging.error(f"Error in background task: {str(e)}")
+# listen to the changes in the sql and update and send to the notif
+def after_car_status_change(mapper, connection, target):
+    print("its working")
+    if target.Availability == "Unbooked":
+        message = {
+            'car_id': target.Vehicle_Id,
+            'message': "The car you were waiting for is now available."
+        }
+        send_message_to_queue(json.dumps(message))
+
+# Attach the event listener to the Car model
+event.listen(Cars, 'after_update', after_car_status_change)
+
         
 #Wait for car availability, if user wants a particular car
 @app.route("/cars/waitForAvailability", methods=["POST"])
 def wait_for_availability():
     data = request.get_json()
     car_id = data['Vehicle_Id']
-    user_id = data.get('User_ID')  # Assuming contact is the way to notify the user
 
     # Message you want to send to the queue
     # message = {
@@ -216,17 +212,34 @@ def wait_for_availability():
                 Vehicle_Id = car_id
         ).first()
     
-    if(reservedCar.Availability == "Booked"):
-        thread = threading.Thread(target=background_task, args=(current_app._get_current_object(),car_id, user_id))
-        thread.daemon = True  # Daemonize thread
-        thread.start()
+    if reservedCar.Availability == "Booked":
+        # No need to start a background task, the event listener will handle it
         message = "You've been added to the waiting list. We will notify you when the car becomes available."
     else:
         message = "Car is available."
-
     return jsonify({"message": message}), 200
     
+#User ends trip then change the booked to unbooked
+@app.route("/end_trip/<car_id>", methods=["POST"])
+def end_trip(car_id):
+    # Here you would update the car's status to 'Unbooked' in your database
 
+    try:
+        reservedCar = db.session.query(Cars).filter_by(Vehicle_Id=car_id).first()
+        if reservedCar:
+            reservedCar.Availability = "Unbooked"
+            db.session.commit()
+            
+            # Now, check if any user is waiting for this car to become available
+            # This could be a function that checks a waiting list and notifies the user(s)
+            
+            return jsonify({"message": "Trip ended and car is now available."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/endtrip')
+def endtripweb():
+    return render_template('endtrip.html')
 
 
 def send_message_to_queue(message):
@@ -236,6 +249,15 @@ def send_message_to_queue(message):
         return jsonify({"status": "success"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+#idk if here needs to send to available car queue   
+# def send_message_to_queue2(message):
+#     try:
+#         channel = amqp_connection.create_connection().channel()
+#         channel.basic_publish(exchange=exchangename, routing_key="car.available", body=json.dumps(message))
+#         return jsonify({"status": "success"}), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
 # Instead of hardcoding the values, we can also get them from the environ as shown below
 # a_queue_name = environ.get('Activity_Log') #Activity_Log
@@ -272,7 +294,7 @@ def processNotifications(notifications):
     
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5000, debug=True,threaded=True)
 
 #ssl_context=('cert.pem', 'key.pem'),host='0.0.0.0', 
 
