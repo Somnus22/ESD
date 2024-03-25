@@ -25,14 +25,24 @@
             <h5>Cars Found: <button class="btn btn-sm btn-secondary ms-3" @click="showFilter">Filter</button></h5>
             <div v-if="filter">
                 <div class="dropdown">
-                    <button class="btn btn-warning dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                       Brand
                     </button>
                     <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" href="#"> Action</a></li>
-                      <li><a class="dropdown-item" href="#">Another action</a></li>
-                      <li><a class="dropdown-item" href="#">Something else here</a></li>
+                      <li v-for="option in brandOptions"><a class="dropdown-item" href="#">{{option}}</a></li>
                     </ul>
+                    <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Type
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li v-for="option in typeOptions"><a class="dropdown-item" href="#">{{option}}</a></li>
+                      </ul>
+                      <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Available?
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li v-for="option in statusOptions"><a class="dropdown-item" href="#">{{option}}</a></li>
+                      </ul>
                 </div>
             </div>
             <table class="table">
@@ -56,7 +66,7 @@
                         <td>{{ car.Per_Hr_Price }}</td>
                         <td>{{ car.Latitude }}</td>
                         <td>{{ car.Longitude }}</td>
-                        <td><button class="btn btn-success" @click="selectCar(car)">Select</button></td>
+                        <td><button class="btn btn-success" @click="selectedCar = car">Select</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -171,13 +181,15 @@
                                 "lat": position.coords.latitude,
                                 "long": position.coords.longitude
                             }));
+                            this.extractOptions();
                         })
                     }
                 },
                 extractOptions() {
-                    this.typeOptions = [...new Set(this.data.map(item => item.Type))];
-                    this.statusOptions = [...new Set(this.data.map(item => item.Availability))];
-                    this.brandOptions = [...new Set(this.data.map(item => item.Brand))];
+                    this.typeOptions = [...new Set(this.carsList.map(car => car.Type))];
+                    this.statusOptions = [...new Set(this.carsList.map(car => car.Availability))];
+                    this.brandOptions = [...new Set(this.carsList.map(car => car.Brand))];
+                    console.log(this.brandOptions)
                 },
                 selectCar(car) {
                     this.selectedCar = car;
