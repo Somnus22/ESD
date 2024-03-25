@@ -22,27 +22,54 @@
         </div>
         <hr>
         <div class="ps-3 pt-1 mb-4" v-if="carsList && !selectedCar">
-            <h5>Cars Found: <button class="btn btn-sm btn-secondary ms-3" @click="showFilter">Filter</button></h5>
-            <div v-if="filter">
+            <div class="mb-3">
+                <h5 class="d-inline">Cars Found:</h5>
+                <button class="btn btn-sm btn-secondary ms-3" @click="showFilter">Filter</button>
+                <button class="btn btn-primary dropdown-toggle btn-sm float-end me-5" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Sort by
+                </button>
+                <ul class="dropdown-menu">
+                    <li><button class="dropdown-item" type="button" @click="applySort('price', 'ascending')">Price ascending</button></li>
+                    <li><button class="dropdown-item" type="button" @click="applySort('price', 'descending')">Price descending</button></li>
+                    <li><button class="dropdown-item" type="button" @click="applySort('distance', 'ascending')">Closest</button></li>
+                    <li><button class="dropdown-item" type="button" @click="applySort('distance', 'descending')">Furthest</button></li>
+                </ul>
+            </div>
+            <div v-if="filter" class="mb-3">
                 <div class="dropdown">
                     <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                       Brand
                     </button>
                     <ul class="dropdown-menu">
-                      <li v-for="option in brandOptions"><a class="dropdown-item" href="#">{{option}}</a></li>
+                        <li v-for="option in brandOptions">
+                            <button type="button" class="dropdown-item" @click="applyFilter('brand',option)">{{option}} <span v-if="selectedBrand == option" class="float-end"><svg style="color:green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                              </svg></span></button>
+                        </li>
                     </ul>
                     <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Type
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li v-for="option in typeOptions"><a class="dropdown-item" href="#">{{option}}</a></li>
-                      </ul>
-                      <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Available?
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li v-for="option in statusOptions"><a class="dropdown-item" href="#">{{option}}</a></li>
-                      </ul>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li v-for="option in typeOptions">
+                            <button type="button" class="dropdown-item" @click="applyFilter('type',option)">{{option}} <span v-if="selectedType == option" class="float-end"><svg style="color:green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                              </svg></span></button>
+                        </li>
+                    </ul>
+                    <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Available?
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li v-for="option in statusOptions">
+                            <button type="button" class="dropdown-item" @click="applyFilter('status',option)">{{option}} <span v-if="selectedStatus == option" class="float-end"><svg style="color:green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                              </svg></span></button>
+                        </li>
+                    </ul>
+                    <button class="btn btn-secondary mb-3"  style="--bs-btn-padding-y: .2rem; --bs-btn-padding-x: .4rem; --bs-btn-font-size: .6rem;" @click="clearFilters" type="button">
+                        Clear filter and sort
+                    </button>
                 </div>
             </div>
             <table class="table">
@@ -59,7 +86,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="car in carsList" :key="car.Vehicle_Id">
+                    <tr v-for="car in filteredData" :key="car.Vehicle_Id">
                         <td>{{ car.Brand }}</td>
                         <td>{{ car.Type }}</td>
                         <td>{{ car.Availability }}</td>
@@ -111,25 +138,30 @@
         new Vue({
             el: '#app',
             data: {
-                carsList: [{"Vehicle_Id": 1, "Type": "Sedan", "Brand" : "Audi", "Latitude" : 1.35, "Longitude" : 104.5, "Availability" : "Unbooked", "Per_Hr_Price" : 6.5}],
+                carsList: [
+                    {"Vehicle_Id": 1, "Type": "Sedan", "Brand" : "Audi", "Latitude" : 1.35, "Longitude" : 104.5, "Availability" : "Unbooked", "Per_Hr_Price" : 6.5},
+                    {"Vehicle_Id": 2, "Type": "SUV", "Brand" : "BMW", "Latitude" : 1.5, "Longitude" : 104.3, "Availability" : "Booked", "Per_Hr_Price" : 7}
+            ],
                 noCars: false,
                 filter: false,
-                data: [],
                 userId: '1', // assume we know userId
                 distanceSortOrder: 'ascending',
+                priceSortOrder: "",
                 typeOptions: [],
                 statusOptions: [],
                 brandOptions: [],
-                showList: false,
                 selectedCar: null,
                 bookedCar: null,
                 reportDate: '',
                 damageDescription: '',
-                reportMade: false
+                reportMade: false,
+                selectedBrand: "",
+                selectedType: "",
+                selectedStatus: ""
             },
             computed: {
                 filteredData() {
-                    let filtered = this.data;
+                    let filtered = this.carsList;
 
                     // Apply type and status filters
                     if (this.selectedType) {
@@ -141,21 +173,45 @@
                     if (this.selectedBrand) {
                         filtered = filtered.filter(item => item.Brand === this.selectedBrand);
                     }
-                    // Apply distance sorting
+
+                    // Apply distance and price sorting
                     if (this.priceSortOrder === 'ascending') {
                         filtered.sort((a, b) => a.Per_Hr_Price - b.Per_Hr_Price);
                     } else {
                         filtered.sort((a, b) => b.Per_Hr_Price - a.Per_Hr_Price);
                     }
 
-
-
+                    if (this.distanceSortOrder === 'ascending') {
+                        // filtered.sort((a, b) => a.Per_Hr_Price - b.Per_Hr_Price);
+                    } else {
+                        // filtered.sort((a, b) => b.Per_Hr_Price - a.Per_Hr_Price);
+                    }
 
                     return filtered;
                 }
             },
 
             methods: {
+                applySort(metric, order){
+                    if (metric == "price"){
+                        this.distanceSortOrder = ''
+                        this.priceSortOrder = order
+                    }else{
+                        this.priceSortOrder = ''
+                        this.distanceSortOrder = order
+                    }
+                },
+                applyFilter(field, option){
+                    if (field == "brand"){
+                        this.selectedBrand = option
+                    }
+                    if (field == "type"){
+                        this.selectedType = option
+                    }
+                    if (field == "status"){
+                        this.selectedStatus = option
+                    }
+                },
                 showFilter(){
                     if (this.filter){
                         this.filter = false;
@@ -189,7 +245,6 @@
                     this.typeOptions = [...new Set(this.carsList.map(car => car.Type))];
                     this.statusOptions = [...new Set(this.carsList.map(car => car.Availability))];
                     this.brandOptions = [...new Set(this.carsList.map(car => car.Brand))];
-                    console.log(this.brandOptions)
                 },
                 selectCar(car) {
                     this.selectedCar = car;
@@ -209,7 +264,7 @@
                         "car_id": this.selectedCar.Vehicle_Id 
                     }));
                 },
-                resetFilters() {
+                clearFilters() {
                     this.selectedType = '';
                     this.selectedStatus = '';
                     this.selectedBrand = '';
