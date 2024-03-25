@@ -1,0 +1,37 @@
+<!-- Example HTML -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>End Trip</title>
+</head>
+<body>
+    <h1>End Your Trip</h1>
+    <p>Implement the form or functionality here to allow users to end their trip.</p>
+    <!-- Add your form or other elements here -->
+    <button id="endTripButton">End Trip</button>
+</body>
+</html>
+
+
+<script>
+document.getElementById('endTripButton').addEventListener('click', function() {
+    const carId = 'YOUR_CAR_ID'; // You need to dynamically set this based on the car in question
+    fetch('/end_trip/' + 2, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Trip ended:', data);
+        // Optionally update the UI here to reflect the trip has ended
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+});
+</script>

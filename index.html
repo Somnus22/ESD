@@ -76,17 +76,24 @@
             <button class="btn btn-primary mt-3" v-if="selectedCar.Availability == 'Booked'" @click="requestNotification">Notify me when the car is available</button> <!-- havent put in vue methods -->
             <button class="btn btn-primary mt-2" v-else @click="bookCar">Book car</button>
         </div>
-        <div v-else>
-            <h2>Report</h2>
-            <div>
-                <label for="reportDate">Date:</label>
-                <input type="date" id="reportDate" v-model="reportDate">
+        <!--If car selected and booked for report-->
+        <div v-if="selectedCar && bookedCar != null && reportMade == false" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+            <h2 style="margin-bottom: 15px;">Report</h2>
+            <div style="margin-bottom: 15px;">
+                <label for="reportDate" style="display: block; margin-bottom: 5px;">Date:</label>
+                <input type="date" id="reportDate" v-model="reportDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
             </div>
-            <div>
-                <label for="damageDescription">Damage Description:</label>
-                <textarea id="damageDescription" v-model="damageDescription"></textarea>
+            <div style="margin-bottom: 15px;">
+                <label for="damageDescription" style="display: block; margin-bottom: 5px;">Damage Description:</label>
+                <textarea id="damageDescription" v-model="damageDescription" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; resize: vertical;"></textarea>
             </div>
-            <button @click="reportCar">Report Car</button>
+            <button @click="reportCar" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Report Car</button>
+        </div>
+        <div v-if="reportMade == true" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+            <h2 style="margin-bottom: 15px;">Report</h2>
+            <div>Report sent! Would you like to cancel your booking?</div>
+            
+            <button @click="cancelBooking" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Cancel Booking</button>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
@@ -102,11 +109,13 @@
                 distanceSortOrder: 'ascending',
                 typeOptions: [],
                 statusOptions: [],
+                brandOptions: [],
                 showList: false,
                 selectedCar: null,
                 bookedCar: null,
                 reportDate: '',
-                damageDescription: ''
+                damageDescription: '',
+                reportMade: false
             },
             computed: {
                 filteredData() {
@@ -114,18 +123,23 @@
 
                     // Apply type and status filters
                     if (this.selectedType) {
-                        filtered = filtered.filter(item => item.type === this.selectedType);
+                        filtered = filtered.filter(item => item.Type === this.selectedType);
                     }
                     if (this.selectedStatus) {
-                        filtered = filtered.filter(item => item.status === this.selectedStatus);
+                        filtered = filtered.filter(item => item.Availability === this.selectedStatus);
+                    }
+                    if (this.selectedBrand) {
+                        filtered = filtered.filter(item => item.Brand === this.selectedBrand);
+                    }
+                    // Apply distance sorting
+                    if (this.priceSortOrder === 'ascending') {
+                        filtered.sort((a, b) => a.Per_Hr_Price - b.Per_Hr_Price);
+                    } else {
+                        filtered.sort((a, b) => b.Per_Hr_Price - a.Per_Hr_Price);
                     }
 
-                    // Apply distance sorting
-                    if (this.distanceSortOrder === 'ascending') {
-                        filtered.sort((a, b) => a.distance - b.distance);
-                    } else {
-                        filtered.sort((a, b) => b.distance - a.distance);
-                    }
+
+
 
                     return filtered;
                 }
@@ -161,8 +175,9 @@
                     }
                 },
                 extractOptions() {
-                    this.typeOptions = [...new Set(this.data.map(item => item.type))];
-                    this.statusOptions = [...new Set(this.data.map(item => item.status))];
+                    this.typeOptions = [...new Set(this.data.map(item => item.Type))];
+                    this.statusOptions = [...new Set(this.data.map(item => item.Availability))];
+                    this.brandOptions = [...new Set(this.data.map(item => item.Brand))];
                 },
                 selectCar(car) {
                     this.selectedCar = car;
@@ -185,7 +200,9 @@
                 resetFilters() {
                     this.selectedType = '';
                     this.selectedStatus = '';
-                    this.distanceSortOrder = 'ascending';
+                    this.selectedBrand = '';
+                    this.priceSortOrder = 'ascending';
+                    
                 },
                 requestNotification(){
                     var xhr = new XMLHttpRequest();
@@ -211,24 +228,42 @@
 
                     // Construct report data
                     const reportData = {
-                        userId : this.userId,
-                        car: this.bookedCar, //can change 
+                        user_id: this.userId,
+                        vehicle_id: this.bookedCar.Vehicle_Id,
                         date: this.reportDate,
-                        damageDescription: this.damageDescription
+                        damages: [this.damageDescription]
                     };
 
                     // Make POST request to report car
-                    axios.post('https://your-microservice-endpoint.com/report', reportData)
+                    axios.post('http://localhost:5000/report', reportData)
                         .then(response => {
                             alert("Car reported successfully");
                             console.log('Reported car data:', response.data);
-                            // Optionally, you can reset reportDate and damageDescription here
+      
                             this.reportDate = '';
                             this.damageDescription = '';
+                            this.reportMade = true;
                         })
                         .catch(error => {
                             console.error('Error reporting car:', error);
                         });
+                },
+                //cancel booking after report is created
+                cancelBooking(){
+                    const report = {
+                        vehicle_id: this.bookedCar.Vehicle_Id,
+                    }
+                    axios.post('http://localhost:5000/cancel', report)
+                        .then(response => {
+                            alert("Car booking cancelled");
+                            console.log('Cancelled:', response.data);
+                            this.bookedCar = null;
+                            this.reportMade = false;
+                        })
+                        .catch(error => {
+                            console.error('Error cancelling booking:', error);
+                        });
+
                 }
             }
         });

@@ -5,6 +5,7 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import desc
 
 
 from datetime import datetime
@@ -29,7 +30,8 @@ class Rental_log(db.Model):
 
     def json(self):
         return {"Log_Id": self.Log_Id, "Log_Entry_Time":self.Log_Entry_Time, "Vehicle_Id": self.Vehicle_Id, "User_Id": self.User_Id,"Status":self.Status}
-    
+
+#create rental log    
 @app.route("/rental_log", methods=['POST'])
 def createRentalLog():
     # JSON data validation
@@ -46,36 +48,44 @@ def createRentalLog():
                         "data": str(data),
                         "message": "Ensure that rental log entry is in JSON format."}), 400
         
-        
-@app.route("/rental_log/<int:logID>", methods=['PUT'])
-def cancelLogEntry(logID):
-    data = request.get_json()
-    log_to_be_deleted = data.get("logID")
 
-    if log_to_be_deleted:
-        try:
-            db.session.delete(log_to_be_deleted)
-            db.session.commit()
+#update rental log as cancelled      
+@app.route("/rental_log/<vehicle_id>", methods=['PUT'])
+def update_log_entry(vehicle_id):
+    try:
+        rental_log = db.session.scalars(
+        db.select(Rental_log).filter_by(Vehicle_Id=vehicle_id).order_by(desc(Rental_log.Log_Entry_Time))).first()
+        if not rental_log:
             return jsonify(
                 {
-                    "code": 200,
-                    "message": f"Rental log with LogID {logID} has been removed."
+                    "code": 404,
+                    "data": {
+                        "Vehicle_id": vehicle_id
+                    },
+                    "message": "Rental log for Vehicle ID"  + str(vehicle_id) + "was not found."
                 }
-            ), 200
-        except Exception as e:
-            return jsonify(
-                {
-                    "code": 500,
-                    "message": f"An error occurred removing the rental log: {str(e)}"
-                }
-            ), 500
-    else:
+            ), 404
+
+        # update availability
+        rental_log.Status = "Cancelled"
+        db.session.commit()
         return jsonify(
             {
-                "code": 404,
-                "message": "Rental log not found."
+                "code": 200,
+                "data": rental_log.json()
             }
-        ), 404
+        ), 200
+    except Exception as e:
+        return jsonify(
+            {
+                "code": 500,
+                "data": {
+                    "Vehicle_Id": vehicle_id,
+                    "Status": "Cancelled"
+                },
+                "message": "An error occurred while updating the rental log. " + str(e)
+            }
+        ), 500
         
         
 def processRentalLog(rental_data):
