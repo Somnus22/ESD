@@ -1,8 +1,5 @@
 from decimal import Decimal
 import json
-import logging
-import threading
-import time
 from flask import Flask, request, jsonify,render_template,current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -11,7 +8,7 @@ import amqp_connection
 import math
 from sqlalchemy import event
 
-from sqlalchemy import Engine, Numeric, asc, func
+from sqlalchemy import  Numeric, asc, func
 
 app = Flask(__name__)
 CORS(app)
