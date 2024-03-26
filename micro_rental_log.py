@@ -86,6 +86,27 @@ def update_log_entry(vehicle_id):
                 "message": "An error occurred while updating the rental log. " + str(e)
             }
         ), 500
+    
+#get rental log    
+@app.route("/rental_log/<user_id>", methods=['GET'])
+def getRentalLog(user_id):
+    # JSON data validation
+    log = db.session.scalars(
+        db.select(Rental_log).filter_by(User_Id=user_id).order_by(desc(Rental_log.Log_Entry_Time))).first()
+
+    if log:
+        return jsonify(
+            {
+                "code": 200,
+                "data": log.json()
+            }
+        )
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Booking not found."
+        }
+    ), 404
         
         
 def processRentalLog(rental_data):
