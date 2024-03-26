@@ -1,0 +1,90 @@
+version: "3.8"
+
+volumes:
+  rabbitmq_data:
+
+services:
+ 
+  ###################################
+  # Car
+  ###################################
+  car:
+    build:
+      context: ./
+      dockerfile: car.Dockerfile
+    image: car:project
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/car
+      PYTHONUNBUFFERED: 1
+ 
+  #######################################################
+  # Rental Log
+  #######################################################
+  rental_log:
+    build:
+      context: ./
+      dockerfile: rental.Dockerfile
+    image: rental:project
+    restart: always
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  ####################################
+  # RabbitMQ: The messaging broker   
+  ####################################
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: esd-rabbit
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      
+  #################################################
+  # Report
+  #################################################
+  report:
+    build:
+      context: ./
+      dockerfile: report.Dockerfile
+    image: report:project
+    restart: always
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  ###################################
+  # Users
+  ###################################
+  users:
+    build:
+      context: ./
+      dockerfile: users.Dockerfile
+    image: users:project
+    restart: always
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  ###############################################
+  # Complex Car Search
+  ###############################################
+  car_booking:
+    build:
+      context: ./
+      dockerfile: car_booking.Dockerfile
+    image: car_booking:project
+    restart: always
+    depends_on:
+      - users
+      - car
+      - rental_log
+      - rabbitmq
+    environment:
+      rabbit_host: rabbitmq
+      rabbit_port: 5672
+      user_URL: http://localhost:5001/user
+      car_inventory_URL: http://localhost:5000/cars
+      rental_log_URL: http://localhost:5002/rental_log
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "5100:5100"
