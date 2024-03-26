@@ -124,6 +124,27 @@ def availability():
             error_message =  "No available cars."
             send_message_to_queue(error_message)
             return jsonify({"code": 404, "message":error_message}), 404
+        
+@app.route("/cars/<vehicle_id>", methods=['GET'])
+def getCarByCarID(vehicle_id):
+    car = db.session.scalars(
+    	db.select(Cars).filter_by(Vehicle_Id=vehicle_id)
+        .limit(1)).first()
+
+
+    if car:
+        return jsonify(
+            {
+                "code": 200,
+                "data": car.json()
+            }
+        )
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Car not found."
+        }
+    ), 404
 
 
 #receive notification that they want to book the car based on distance
