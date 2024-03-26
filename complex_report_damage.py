@@ -57,6 +57,7 @@ def processReportDamage(report):
     update_result = invoke_http(car_inventory_URL +'/' + report['vehicle_id'] , method="PUT")
     print('update_result:', update_result)
     print("\nUpdated car availability to 'Damaged'.\n")
+    return update_result
 
 #cancel booking
 @app.route("/cancel", methods=['POST'])
@@ -93,6 +94,7 @@ def update_rental_log(report):
     print('\n-----Invoking rental log microservice-----')
     rental_log_result = invoke_http(rental_log_URL + "/" + report['vehicle_id'], method='PUT', json=report['vehicle_id'])
     print('rental_log_result:', rental_log_result)
+    return rental_log_result
 
 
 
