@@ -54,35 +54,56 @@ services:
   ###################################
   # Users
   ###################################
-  users:
-    build:
-      context: ./
-      dockerfile: users.dockerfile
-    image: users:project
-    restart: always
-    environment:
-      PYTHONUNBUFFERED: 1
+  #users:
+  #  build:
+  #    context: ./
+  #    dockerfile: users.dockerfile
+  #  image: users:project
+  #  restart: always
+  #  environment:
+  #    PYTHONUNBUFFERED: 1
 
   ###############################################
   # Car Booking
   ###############################################
-  car_booking:
-    build:
-      context: ./
-      dockerfile: car_booking.dockerfile
-    image: car_booking:project
-    restart: always
-    depends_on:
-      - users
-      - car_inventory
-      - rental_log
-    environment:
-      user_URL: http://users:5001/user
-      car_inventory_URL: http://car:5000/cars
-      rental_log_URL: http://rental_log:5002/rental_log
-      PYTHONUNBUFFERED: 1
-    ports:
-      - "5100:5100"
+  #car_booking:
+  #  build:
+  #    context: ./
+  #    dockerfile: car_booking.dockerfile
+  #  image: car_booking:project
+  #  restart: always
+  #  depends_on:
+  #    - users
+  #    - car_inventory
+  #    - rental_log
+  #  environment:
+  #    user_URL: http://users:5001/user
+  #    car_inventory_URL: http://car_inventory:5000/cars
+  #    rental_log_URL: http://rental_log:5002/rental_log
+  #    PYTHONUNBUFFERED: 1
+  #  ports:
+  #    - "5100:5100"
+
+  ###############################################
+  # Car Search
+  ###############################################
+  #car_search:
+  #  build:
+  #    context: ./
+  #    dockerfile: car_search.dockerfile
+  #  image: car_search:project
+  #  restart: always
+  #  depends_on:
+  #    - users
+  #    - car_inventory
+  #    - rental_log
+  #  environment:
+  #    user_URL: http://users:5001/user
+  #    car_inventory_URL: http://car_inventory:5000/cars
+  #    rental_log_URL: http://rental_log:5002/rental_log
+  #    PYTHONUNBUFFERED: 1
+  #  ports:
+  #    - "5101:5101"
   
   ###############################################
   # Report Damage
@@ -98,7 +119,7 @@ services:
       - car_inventory
       - rental_log
     environment:
-      car_inventory_URL: http://car:5000/cars
+      car_inventory_URL: http://car_inventory:5000/cars
       rental_log_URL: http://rental_log:5002/rental_log
       report_URL: http://report:5003/report
       PYTHONUNBUFFERED: 1
