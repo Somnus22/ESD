@@ -18,7 +18,7 @@ services:
   car_inventory:
     build:
       context: ./
-      dockerfile: car.Dockerfile
+      dockerfile: car.dockerfile
     image: car:project
     restart: always
     environment:
@@ -31,7 +31,7 @@ services:
   rental_log:
     build:
       context: ./
-      dockerfile: rental.Dockerfile
+      dockerfile: rental_log.dockerfile
     image: rental:project
     restart: always
     environment:
@@ -44,7 +44,7 @@ services:
   report:
     build:
       context: ./
-      dockerfile: report.Dockerfile
+      dockerfile: report.dockerfile
     image: report:project
     restart: always
     environment:
@@ -57,29 +57,26 @@ services:
   users:
     build:
       context: ./
-      dockerfile: users.Dockerfile
+      dockerfile: users.dockerfile
     image: users:project
     restart: always
     environment:
       PYTHONUNBUFFERED: 1
 
   ###############################################
-  # Complex Car Search
+  # Car Booking
   ###############################################
   car_booking:
     build:
       context: ./
-      dockerfile: car_booking.Dockerfile
+      dockerfile: car_booking.dockerfile
     image: car_booking:project
     restart: always
     depends_on:
       - users
-      - car
+      - car_inventory
       - rental_log
-      - rabbitmq
     environment:
-      rabbit_host: rabbitmq
-      rabbit_port: 5672
       user_URL: http://users:5001/user
       car_inventory_URL: http://car:5000/cars
       rental_log_URL: http://rental_log:5002/rental_log
@@ -93,12 +90,12 @@ services:
   report_damage:
     build:
       context: ./
-      dockerfile: report_damage.Dockerfile
+      dockerfile: report_damage.dockerfile
     image: report_damage:project
     restart: always
     depends_on:
       - report
-      - car
+      - car_inventory
       - rental_log
     environment:
       car_inventory_URL: http://car:5000/cars
