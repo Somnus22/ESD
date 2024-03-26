@@ -1,8 +1,5 @@
 version: "3.8"
 
-volumes:
-  rabbitmq_data:
-
 services:
  
   ###################################
