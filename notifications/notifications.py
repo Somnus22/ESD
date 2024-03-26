@@ -19,7 +19,7 @@ user_URL = 'http://localhost:5001/user/'
 
 def send_simple_message(user_id,car_id):
     print('\n-----Invoking User microservice-----')
-    get_user_details = invoke_http(user_URL + user_id)
+    get_user_details = invoke_http(user_URL + str(user_id))
     print('Car Wait For Availability Result:', get_user_details)
   
 
@@ -44,12 +44,13 @@ def send_simple_message(user_id,car_id):
     
 
     try:
+        print(get_user_details)
         email_message = f"The car {car_id} you wanted to book is now available. Hurry up and book now!"
         response = requests.post(
             "https://api.mailgun.net/v3/sandboxcefaa164afc34eba9933f7f63752ee7f.mailgun.org/messages",
             auth=("api", "a54c5ed81fe292a752f7cfd3f62c0c79-b02bcf9f-b48c4038"),
             data={"from": "Excited User <mailgun@sandboxcefaa164afc34eba9933f7f63752ee7f.mailgun.org>",
-                  "to": message['emailAddress'],
+                  "to": get_user_details['data']['emailAddress'],
                   "subject": "Hello",
                   "text": email_message})
         
@@ -87,8 +88,11 @@ def processNotifications(notifications):
     print("Notifications: Recording notifications:")
     # url = f"http://localhost:5000/order?user_id={user_id}"
     # user_data = invoke_http(url)
-    user_id = notifications.user_id
-    send_simple_message(user_id)
+    print(notifications)
+    message_dict = json.loads(notifications)
+    user_id = message_dict.get('user_id')
+    car_id = message_dict.get('car_id')
+    send_simple_message(user_id,car_id)
     
     print(notifications)
 
@@ -96,15 +100,15 @@ def processNotifications(notifications):
 def send_notification():
     if request.method == 'POST':
         data = request.json
-        car_id = data.get('car_id')
+        Vehicle_Id = data.get('Vehicle_Id')
         user_id = data.get('user_id')
         message = data.get('message')
 
-        if not all([car_id, user_id, message]):
+        if not all([Vehicle_Id, user_id, message]):
             return jsonify({"error": "Missing required fields"}), 400
 
         notification_data = {
-            'car_id': car_id,
+            'Vehicle_Id': Vehicle_Id,
             'user_id': user_id,
             'message': message
         }
@@ -137,12 +141,12 @@ def send_notification():
         "data": {
             "Wait for Car Availability Update": car_wait_for_availability,
         },
-        'message' : f'User {user_id} placed on waiting list for car {car_id}'
+        'message' : f'User {user_id} placed on waiting list for car {Vehicle_Id}'
     }
 
 def run_flask_app():
     print("This is flask " + os.path.basename(__file__) + " for sending notifications...")
-    app.run(host="0.0.0.0", port=5006)
+    app.run(host="0.0.0.0", port=5004)
 
 if __name__ == "__main__":
     # Start Flask app in another thread

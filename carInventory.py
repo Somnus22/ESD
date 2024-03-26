@@ -15,7 +15,7 @@ from sqlalchemy import Numeric, asc, func
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:root@localhost:8889/Cars'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/Cars'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -203,8 +203,8 @@ def background_task(app,car_id, user_id):
 @app.route("/cars/waitForAvailability", methods=["POST"])
 def wait_for_availability():
     data = request.get_json()
-    car_id = data['Vehicle_Id']
-    user_id = data.get('User_ID')  # Assuming contact is the way to notify the user
+    car_id = data.get('Vehicle_Id')
+    user_id = data.get('user_id')  # Assuming contact is the way to notify the user
 
     # Message you want to send to the queue
     # message = {
@@ -215,7 +215,7 @@ def wait_for_availability():
     reservedCar = db.session.query(Cars).filter_by(
                 Vehicle_Id = car_id
         ).first()
-    
+    print(reservedCar)
     if(reservedCar.Availability == "Booked"):
         thread = threading.Thread(target=background_task, args=(current_app._get_current_object(),car_id, user_id))
         thread.daemon = True  # Daemonize thread
@@ -224,7 +224,7 @@ def wait_for_availability():
     else:
         message = "Car is available."
 
-    return jsonify({"message": message}), 200
+    return jsonify({"message": message,"code":200})
     
 
 
