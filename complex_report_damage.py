@@ -2,16 +2,16 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import os, sys
-
+from os import environ
 import requests
 from invokes import invoke_http
 
 app = Flask(__name__)
 CORS(app)
 
-report_URL = "http://localhost:5003/report"
-car_inventory_URL = "http://localhost:5000/cars"
-rental_log_URL = "http://localhost:5002/rental_log"
+report_URL = environ.get("report_URL") or "http://localhost:5003/report"
+car_inventory_URL = environ.get("car_inventory_URL") or "http://localhost:5000/cars"
+rental_log_URL = environ.get("rental_log_URL") or "http://localhost:5002/rental_log"
 
 #create report
 @app.route("/create_report", methods=['POST'])
