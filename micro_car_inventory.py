@@ -7,13 +7,13 @@ import pika
 import requests
 import amqp_connection
 from sqlalchemy import event
-
+from os import environ
 from sqlalchemy import  Numeric, asc, func
 
 app = Flask(__name__)
 CORS(app)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:root@localhost:8889/Cars'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost:3306/Cars'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -365,9 +365,47 @@ def processNotifications(notifications):
     print("Notifications: Recording notifications:")
     print(notifications)
     
+# update car availability status as "damaged"
+@app.route("/cars/<vehicle_id>", methods=['PUT'])
+def update_availability(vehicle_id):
+    try:
+        car = db.session.scalars(
+        db.select(Cars).filter_by(Vehicle_Id=vehicle_id).
+        limit(1)).first()
+        if not car:
+            return jsonify(
+                {
+                    "code": 404,
+                    "data": {
+                        "Vehicle_id": vehicle_id
+                    },
+                    "message": "Vehicle not found."
+                }
+            ), 404
 
+        # update availability
+        car.Availability = "Damaged"
+        db.session.commit()
+        return jsonify(
+            {
+                "code": 200,
+                "data": car.json()
+            }
+        ), 200
+    except Exception as e:
+        return jsonify(
+            {
+                "code": 500,
+                "data": {
+                    "Vehicle_Id": vehicle_id,
+                    "Availability": "Damaged"
+                },
+                "message": "An error occurred while updating the order. " + str(e)
+            }
+        ), 500
+    
 if __name__ == '__main__':
-    app.run(port=5000, debug=True,threaded=True)
+    app.run(host='0.0.0.0',port=5000, debug=True,threaded=True)
 
 #ssl_context=('cert.pem', 'key.pem'),host='0.0.0.0', 
 

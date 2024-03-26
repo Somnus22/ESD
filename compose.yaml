@@ -1,18 +1,28 @@
 version: "3.8"
 
 services:
- 
+  ####################################
+  # RabbitMQ: The messaging broker   
+  ####################################
+  #rabbitmq:
+  #  image: rabbitmq:3-management
+  #  hostname: esd-rabbit
+  #  restart: always
+  #  ports:
+  #    - "5672:5672"
+  #    - "15672:15672"
+
   ###################################
-  # Car
+  # Car_inventory
   ###################################
-  car:
+  car_inventory:
     build:
       context: ./
       dockerfile: car.Dockerfile
     image: car:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/car
+      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/Cars
       PYTHONUNBUFFERED: 1
  
   #######################################################
@@ -25,18 +35,8 @@ services:
     image: rental:project
     restart: always
     environment:
+      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/rental_log
       PYTHONUNBUFFERED: 1
-
-  ####################################
-  # RabbitMQ: The messaging broker   
-  ####################################
-  rabbitmq:
-    image: rabbitmq:3-management
-    hostname: esd-rabbit
-    restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
       
   #################################################
   # Report
@@ -48,6 +48,7 @@ services:
     image: report:project
     restart: always
     environment:
+      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/report
       PYTHONUNBUFFERED: 1
 
   ###################################
@@ -79,9 +80,30 @@ services:
     environment:
       rabbit_host: rabbitmq
       rabbit_port: 5672
-      user_URL: http://localhost:5001/user
-      car_inventory_URL: http://localhost:5000/cars
-      rental_log_URL: http://localhost:5002/rental_log
+      user_URL: http://users:5001/user
+      car_inventory_URL: http://car:5000/cars
+      rental_log_URL: http://rental_log:5002/rental_log
       PYTHONUNBUFFERED: 1
     ports:
       - "5100:5100"
+  
+  ###############################################
+  # Report Damage
+  ###############################################
+  report_damage:
+    build:
+      context: ./
+      dockerfile: report_damage.Dockerfile
+    image: report_damage:project
+    restart: always
+    depends_on:
+      - report
+      - car
+      - rental_log
+    environment:
+      car_inventory_URL: http://car:5000/cars
+      rental_log_URL: http://rental_log:5002/rental_log
+      report_URL: http://report:5003/report
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "5102:5102"

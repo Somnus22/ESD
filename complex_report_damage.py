@@ -54,7 +54,7 @@ def processReportDamage(report):
     
     # Update car status as "Damaged" in car inventory
     print('\n\n-----Invoking car inventory microservice-----')
-    update_result = invoke_http(car_inventory_URL +'/' + report['vehicle_id'] , method="PUT", json = report['vehicle_id'])
+    update_result = invoke_http(car_inventory_URL +'/' + report['vehicle_id'] , method="PUT")
     print('update_result:', update_result)
     print("\nUpdated car availability to 'Damaged'.\n")
 

@@ -74,7 +74,7 @@ def create_request_car_queue(channel):
 
 def create_available_car_queue(channel):
     print('amqp_setup:create_available_car_queue')
-    a_queue_name = 'Available_Car' #queue name 
+    a_queue_name = 'Available_Car'
     channel.queue_declare(queue=a_queue_name, durable=True) # 'durable' makes the queue survive broker restarts
     channel.queue_bind(exchange=exchangename, queue=a_queue_name, routing_key='car.available')
         # bind the queue to the exchange via the key

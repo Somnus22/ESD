@@ -6,8 +6,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc
-
-
+from os import environ
 from datetime import datetime
 
 app = Flask(__name__)
@@ -16,7 +15,8 @@ CORS(app)
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/rental_log'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/rental_log'
 
 db = SQLAlchemy(app)
 
