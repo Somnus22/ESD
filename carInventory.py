@@ -263,7 +263,7 @@ def wait_for_availability():
         message = "You've been added to the waiting list. We will notify you when the car becomes available."
     else:
         message = "Car is available."
-    return jsonify({"message": message}), 200
+    return jsonify({"code":200,"message": message}), 200
     
 #User ends trip then change the booked to unbooked
 @app.route("/end_trip/<car_id>", methods=["POST"])

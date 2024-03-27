@@ -17,49 +17,57 @@ exchangetype="topic"
 car_inventory_URL = "http://localhost:5000/cars/waitForAvailability"
 user_URL = 'http://localhost:5001/user/'
 
-def send_simple_message(user_id,car_id):
-    print('\n-----Invoking User microservice-----')
-    get_user_details = invoke_http(user_URL + str(user_id))
-    print('Car Wait For Availability Result:', get_user_details)
-  
+car_dict = {}
 
-    # Check the order result; if a failure, send it to the error microservice.
-    code = get_user_details["code"]
-    message = json.dumps(get_user_details)
+def send_simple_message(car_id):
+    arr_of_users = car_dict[car_id]
+    print(arr_of_users)
+    arr_of_emails = []
+    for user in arr_of_users:
+        print('\n-----Invoking User microservice-----')
+        get_user_details = invoke_http(user_URL + str(user))
+        print('Car Wait For Availability Result:', get_user_details)
+    
 
- 
-    if code not in range(200, 300):
+        # Check the order result; if a failure, send it to the error microservice.
+        code = get_user_details["code"]
+        message = json.dumps(get_user_details)
+
+        if code not in range(200, 300):
+
         # Inform the error microservice
         #print('\n\n-----Invoking error microservice as order fails-----')
-        print('\n\n-----Publishing the error message with for User Microservice-----')
-
-       
-        
-        # 7. Return error
-        return {
+            print('\n\n-----Publishing the error message with for User Microservice-----')
+            return {
             "code": 500,
             "data": {"Get User Details": get_user_details},
-            "message": "Error in Getting User Details"
-        }
+            "message": "Error in Getting User Details"}
+            
+
+       
+        arr_of_emails.append(get_user_details['data']['emailAddress'])
+        # 7. Return error
+        
     
 
     try:
-        print(get_user_details)
-        email_message = f"The car {car_id} you wanted to book is now available. Hurry up and book now!"
-        response = requests.post(
-            "https://api.mailgun.net/v3/sandboxcefaa164afc34eba9933f7f63752ee7f.mailgun.org/messages",
-            auth=("api", "a54c5ed81fe292a752f7cfd3f62c0c79-b02bcf9f-b48c4038"),
-            data={"from": "Excited User <mailgun@sandboxcefaa164afc34eba9933f7f63752ee7f.mailgun.org>",
-                  "to": get_user_details['data']['emailAddress'],
-                  "subject": "Hello",
-                  "text": email_message})
-        
-        # Check the response status code
-        if response.status_code == 200:
-            print("Email sent successfully!")
-        else:
-            print(f"Failed to send email. Status code: {response.status_code}")
-            print(response.text)  # Print error message if available
+        for email in arr_of_emails:
+            print(get_user_details)
+            email_message = f"The car {car_id} you wanted to book is now available. Hurry up and book now!"
+            response = requests.post(
+                "https://api.mailgun.net/v3/sandboxcefaa164afc34eba9933f7f63752ee7f.mailgun.org/messages",
+                auth=("api", "a54c5ed81fe292a752f7cfd3f62c0c79-b02bcf9f-b48c4038"),
+                data={"from": "Excited User <mailgun@sandboxcefaa164afc34eba9933f7f63752ee7f.mailgun.org>",
+                    "to": email,
+                    "subject": "Hello",
+                    "text": email_message})
+            
+            # Check the response status code
+            if response.status_code == 200:
+                print("Email sent successfully!")
+            else:
+                print(f"Failed to send email. Status code: {response.status_code}")
+                print(response.text)  # Print error message if available
 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
@@ -90,9 +98,8 @@ def processNotifications(notifications):
     # user_data = invoke_http(url)
     print(notifications)
     message_dict = json.loads(notifications)
-    user_id = message_dict.get('user_id')
     car_id = message_dict.get('car_id')
-    send_simple_message(user_id,car_id)
+    send_simple_message(car_id)
     
     print(notifications)
 
@@ -136,6 +143,11 @@ def send_notification():
             "data": {"Wait for Car Availability Updatee": car_wait_for_availability},
             "message": "User not placed on waiting list"
         }
+    
+    if Vehicle_Id in car_dict:
+        car_dict[Vehicle_Id].append(user_id)
+    else:
+        car_dict[Vehicle_Id] = [user_id]
     return {
         "code": 201,
         "data": {
