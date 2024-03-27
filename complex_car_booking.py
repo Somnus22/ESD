@@ -38,7 +38,7 @@ def car_rental():
 
             return jsonify({
                 "code": 500,
-                "message": "place_order.py internal error: " + ex_str
+                "message": "complex_car_booking.py internal error: " + ex_str
             }), 500
 
     # if reached here, not a JSON request.
@@ -50,7 +50,7 @@ def car_rental():
 def processCarRental(rental_info):
 
     print('\n-----Invoking Car Inventory microservice-----')
-    car_inventory_update = invoke_http(car_inventory_URL + "/book")
+    car_inventory_update = invoke_http(car_inventory_URL + "/book", method="PUT", json = rental_info)
     print('Car Rental Result:', car_inventory_update)
   
 

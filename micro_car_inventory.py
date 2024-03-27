@@ -12,8 +12,8 @@ from sqlalchemy import  Numeric, asc, func
 
 app = Flask(__name__)
 CORS(app)
-#app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost:3306/Cars'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost:3306/Cars'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -400,7 +400,7 @@ def update_availability(vehicle_id):
                     "vehicle_Id": vehicle_id,
                     "availability": "Damaged"
                 },
-                "message": "An error occurred while updating the order. " + str(e)
+                "message": "An error occurred while updating the vehicle availability. " + str(e)
             }
         ), 500
     
