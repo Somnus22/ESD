@@ -26,7 +26,7 @@ class Rental_log(db.Model):
     log_entry_time = db.Column(db.DateTime, nullable=False, default=datetime.now)
     vehicle_id = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String(10), nullable=False)
+    status = db.Column(db.String(10), nullable=False, default='CONFIRMED')
 
     def json(self):
         return {"log_id": self.log_id, "log_entry_time":self.log_entry_time, "vehicle_id": self.vehicle_id, "user_id": self.user_id,"status":self.status}
