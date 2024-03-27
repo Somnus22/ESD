@@ -12,8 +12,8 @@ from sqlalchemy import  Numeric, asc, func
 
 app = Flask(__name__)
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost:3306/Cars'
+#app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost:3306/Cars'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -21,27 +21,27 @@ db = SQLAlchemy(app)
 class Cars(db.Model):
     __tablename__ = 'Cars'
 
-    Vehicle_Id = db.Column(db.Integer, primary_key=True)
-    CarType = db.Column(db.String(64), nullable=False)
-    Brand = db.Column(db.String(64),nullable=False)
-    Model = db.Column(db.String(64))
-    Latitude = db.Column(Numeric(precision=10, scale=7))  # Adjust precision and scale as needed
-    Longitude = db.Column(Numeric(precision=10, scale=7))  # Adjust precision and scale as needed
-    Availability = db.Column(db.String(8), nullable=False)
-    Per_Hr_Price = db.Column(Numeric(precision=10, scale=2), nullable=False)
+    vehicle_id = db.Column(db.Integer, primary_key=True)
+    cartype = db.Column(db.String(64), nullable=False)
+    brand = db.Column(db.String(64),nullable=False)
+    model = db.Column(db.String(64))
+    latitude = db.Column(Numeric(precision=10, scale=7))  # Adjust precision and scale as needed
+    longitude = db.Column(Numeric(precision=10, scale=7))  # Adjust precision and scale as needed
+    availability = db.Column(db.String(8), nullable=False)
+    per_hr_price = db.Column(Numeric(precision=10, scale=2), nullable=False)
 
-    def __init__(self, Vehicle_Id, CarType, Brand,Model, Latitude, Longitude, Availablity, Per_Hr_Price):
-        self.Vehicle_Id = Vehicle_Id
-        self.CarType = CarType
-        self.Brand = Brand
-        self.Model = Model
-        self.Latitude = Latitude
-        self.Longitude = Longitude
-        self.Availability = Availablity
-        self.Per_Hr_Price = Per_Hr_Price
+    def __init__(self, vehicle_id, cartype, brand, model, latitude, longitude, availablity, per_hr_price):
+        self.vehicle_id = vehicle_id
+        self.carType = cartype
+        self.brand = brand
+        self.model = model
+        self.latitude = latitude
+        self.longitude = longitude
+        self.availability = availablity
+        self.per_hr_price = per_hr_price
 
     def json(self):
-        return {"Vehicle_Id": self.Vehicle_Id, "CarType": self.CarType, "Brand": self.Brand, "Model": self.Model,"Latitude": self.Latitude, "Longitude": self.Longitude, "Availability": self.Availability, "Per_Hr_Price": self.Per_Hr_Price}
+        return {"vehicle_id": self.vehicle_id, "cartype": self.cartype, "brand": self.brand, "model": self.model,"latitude": self.latitude, "longitude": self.longitude, "availability": self.availability, "per_hr_price": self.per_hr_price}
 
 #showing all the cars that are available
 @app.route("/cars")
@@ -67,7 +67,7 @@ def get_all():
 @app.route("/cars/<vehicle_id>", methods=['GET'])
 def getCarByCarID(vehicle_id):
     car = db.session.scalars(
-    	db.select(Cars).filter_by(Vehicle_Id=vehicle_id)
+    	db.select(Cars).filter_by(vehicle_id=vehicle_id)
         .limit(1)).first()
 
 
@@ -107,12 +107,12 @@ def find_by_nearest_distance():
     # Expecting 'lat,long
     user_location = f"{Latitude},{Longitude}"
     
-    all_cars = Cars.query.filter_by(Availability="Unbooked").all()
+    all_cars = Cars.query.filter_by(availability="Unbooked").all()
     if not all_cars:
         return jsonify({"code": 404, "message": "No available cars found"}), 404
 
     # Prepare to call the Distance Matrix API
-    destinations = [f"{car.Latitude},{car.Longitude}" for car in all_cars]
+    destinations = [f"{car.latitude},{car.longitude}" for car in all_cars]
     origins = [f"{Latitude},{Longitude}"]
     api_key = 'AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ'
     url = "https://maps.googleapis.com/maps/api/distancematrix/json"
@@ -177,7 +177,7 @@ def find_by_nearest_distance():
 @app.route("/cars/available")
 def availability():
     if request.method == 'GET':
-        available_cars = Cars.query.filter_by(Availability="Unbooked").all()
+        available_cars = Cars.query.filter_by(availability="Unbooked").all()
         if available_cars:
             good_message = "Available cars retrieved successfully."
             
@@ -204,16 +204,16 @@ def book_car():
     
     user_location = f"{Latitude},{Longitude}"
     
-    query_filter = Cars.query.filter_by(Availability="Unbooked")
+    query_filter = Cars.query.filter_by(availability="Unbooked")
     if car_type:
-        query_filter = query_filter.filter_by(CarType=car_type)
+        query_filter = query_filter.filter_by(cartype=car_type)
     
     all_cars = query_filter.all()
     
     if not all_cars:
         return jsonify({"code": 404, "message": "No available cars found of the requested type"}), 404
     
-    destinations = [f"{car.Latitude},{car.Longitude}" for car in all_cars]
+    destinations = [f"{car.latitude},{car.longitude}" for car in all_cars]
     distances_response = get_distance_matrix([user_location], destinations, "AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ")
     
     if car_type == "":
@@ -247,19 +247,19 @@ def book_car():
     
 
         
-        closest_car.Availability = "Booked"  # Update availability
+        closest_car.availability = "Booked"  # Update availability
         db.session.commit()
         
-        return jsonify({"code": 200, "message": "Car booked successfully.", "CarID": closest_car.Vehicle_Id}), 200
+        return jsonify({"code": 200, "message": "Car booked successfully.", "Vehicle_ID": closest_car.vehicle_id}), 200
     
     return jsonify({"code": 500, "message": "Error fetching distances from Google API"}), 500
         
                 
 # listen to the changes in the sql and update and send to the notif
 def after_car_status_change(mapper, connection, target):
-    if target.Availability == "Unbooked":
+    if target.availability == "Unbooked":
         message = {
-            'car_id': target.Vehicle_Id,
+            'car_id': target.vehicle_id,
             'message': "The car you were waiting for is now available."
         }
         send_message_to_queue(json.dumps(message))
@@ -278,7 +278,7 @@ def wait_for_availability():
                 Vehicle_Id = car_id
         ).first()
     
-    if reservedCar.Availability == "Booked":
+    if reservedCar.availability == "Booked":
         # No need to start a background task, the event listener will handle it
         message = "You've been added to the waiting list. We will notify you when the car becomes available."
     else:
@@ -286,14 +286,14 @@ def wait_for_availability():
     return jsonify({"message": message}), 200
     
 #User ends trip then change the booked to unbooked
-@app.route("/end_trip/<car_id>", methods=["POST"])
-def end_trip(car_id):
+@app.route("/end_trip/<vehicle_id>", methods=["POST"])
+def end_trip(vehicle_id):
     # Here you would update the car's status to 'Unbooked' in your database
 
     try:
-        reservedCar = db.session.query(Cars).filter_by(Vehicle_Id=car_id).first()
+        reservedCar = db.session.query(Cars).filter_by(vehicle_id=vehicle_id).first()
         if reservedCar:
-            reservedCar.Availability = "Unbooked"
+            reservedCar.availability = "Unbooked"
             db.session.commit()
             
             # Now, check if any user is waiting for this car to become available
@@ -316,7 +316,7 @@ def get_car_locations():
 
     
     # Convert to a list of dicts to jsonify
-    locations_dict = [{"latitude": car.Latitude, "longitude": car.Longitude} for car in cars]
+    locations_dict = [{"latitude": car.latitude, "longitude": car.longitude} for car in cars]
     
 
     
@@ -370,21 +370,21 @@ def processNotifications(notifications):
 def update_availability(vehicle_id):
     try:
         car = db.session.scalars(
-        db.select(Cars).filter_by(Vehicle_Id=vehicle_id).
+        db.select(Cars).filter_by(vehicle_id=vehicle_id).
         limit(1)).first()
         if not car:
             return jsonify(
                 {
                     "code": 404,
                     "data": {
-                        "Vehicle_id": vehicle_id
+                        "vehicle_id": vehicle_id
                     },
                     "message": "Vehicle not found."
                 }
             ), 404
 
         # update availability
-        car.Availability = "Damaged"
+        car.availability = "Damaged"
         db.session.commit()
         return jsonify(
             {
@@ -397,8 +397,8 @@ def update_availability(vehicle_id):
             {
                 "code": 500,
                 "data": {
-                    "Vehicle_Id": vehicle_id,
-                    "Availability": "Damaged"
+                    "vehicle_Id": vehicle_id,
+                    "availability": "Damaged"
                 },
                 "message": "An error occurred while updating the order. " + str(e)
             }

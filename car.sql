@@ -3,18 +3,18 @@ USE `Cars`;
 
 -- Create table to store car information
 CREATE TABLE Cars (
-    Vehicle_Id INT PRIMARY KEY,
-    CarType VARCHAR(64),
-    Brand VARCHAR(64),
-    Model VARCHAR(64),
-    Latitude DECIMAL(10,7),
-    Longitude DECIMAL(10,7),
-    Availability VARCHAR(8),
-    Per_Hr_Price DECIMAL(10, 2)
+    `vehicle_id` INT PRIMARY KEY,
+    `cartype` VARCHAR(64),
+    `brand` VARCHAR(64),
+    `model` VARCHAR(64),
+    `latitude` DECIMAL(10,7),
+    `longitude` DECIMAL(10,7),
+    `availability` VARCHAR(8),
+    `per_hr_price` DECIMAL(10, 2)
 );
 
 -- Insert data into the table
-INSERT INTO Cars (Vehicle_Id, CarType, Brand, Model, Availability, Per_Hr_Price, Latitude, Longitude) VALUES
+INSERT INTO Cars (vehicle_id, cartype, brand, model, availability, per_hr_price, latitude, longitude) VALUES
 ('1', 'SUV', 'MERCEDES','EQB SUV', 'Unbooked', 10.10, 1.3525000, 103.9447000),
 ('2', 'SEDAN', 'MERCEDES','GLA SUV', 'Booked', 8.30,34.0522000, -118.2437000),
 ('3', 'SUV', 'MITSUBISHI','EVO 9', 'Unbooked', 7.50, 1.0000000, 104.0000000),

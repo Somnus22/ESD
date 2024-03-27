@@ -54,36 +54,15 @@ services:
   ###################################
   # Users
   ###################################
-  #users:
-  #  build:
-  #    context: ./
-  #    dockerfile: users.dockerfile
-  #  image: users:project
-  #  restart: always
-  #  environment:
-  #    PYTHONUNBUFFERED: 1
-
-  ###############################################
-  # Car Booking
-  ###############################################
-  #car_booking:
-  #  build:
-  #    context: ./
-  #    dockerfile: car_booking.dockerfile
-  #  image: car_booking:project
-  #  restart: always
-  #  depends_on:
-  #    - users
-  #    - car_inventory
-  #    - rental_log
-  #  environment:
-  #    user_URL: http://users:5001/user
-  #    car_inventory_URL: http://car_inventory:5000/cars
-  #    rental_log_URL: http://rental_log:5002/rental_log
-  #    PYTHONUNBUFFERED: 1
-  #  ports:
-  #    - "5100:5100"
-
+  users:
+    build:
+      context: ./
+      dockerfile: users.dockerfile
+    image: users:project
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/users
+      PYTHONUNBUFFERED: 1
   ###############################################
   # Car Search
   ###############################################
@@ -103,8 +82,27 @@ services:
   #    rental_log_URL: http://rental_log:5002/rental_log
   #    PYTHONUNBUFFERED: 1
   #  ports:
-  #    - "5101:5101"
-  
+  #    - "5100:5100"
+  ###############################################
+  # Car Booking
+  ###############################################
+  car_booking:
+    build:
+      context: ./
+      dockerfile: car_booking.dockerfile
+    image: car_booking:project
+    restart: always
+    depends_on:
+      - users
+      - car_inventory
+      - rental_log
+    environment:
+      user_URL: http://users:5001/user
+      car_inventory_URL: http://car_inventory:5000/cars
+      rental_log_URL: http://rental_log:5002/rental_log
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "5101:5101"
   ###############################################
   # Report Damage
   ###############################################

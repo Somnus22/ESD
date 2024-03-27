@@ -20,10 +20,10 @@ USE `Report`;
 
 DROP TABLE IF EXISTS `report`;
 CREATE TABLE IF NOT EXISTS `report` (
-  `Report_id` int(11) NOT NULL AUTO_INCREMENT,
-  `User_id` int(11) NOT NULL,
-  `Vehicle_Id` int(11) NOT NULL,
-  `Report_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `report_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `vehicle_id` int(11) NOT NULL,
+  `report_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`report_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
@@ -35,9 +35,9 @@ CREATE TABLE IF NOT EXISTS `report` (
 
 DROP TABLE IF EXISTS damage;
 CREATE TABLE IF NOT EXISTS damage (
-  `Report_id` int(11) NOT NULL,
-  `Damage_num` int(11) NOT NULL,
-  `Damage_desc` varchar(300) NOT NULL,
+  `report_id` int(11) NOT NULL,
+  `damage_num` int(11) NOT NULL,
+  `damage_desc` varchar(300) NOT NULL,
   PRIMARY KEY (report_id, damage_num),
   FOREIGN KEY (report_id) REFERENCES report(report_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
