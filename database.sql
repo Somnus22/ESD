@@ -89,7 +89,6 @@ DROP TABLE IF EXISTS `Rental_Log`;
 CREATE TABLE IF NOT EXISTS `Rental_Log` (
     `log_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
     `log_entry_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `log_entry_desc` VARCHAR(255) NOT NULL,
     `vehicle_id` INT(11) NOT NULL,
     `user_id` INT(11) NOT NULL,
     `status` VARCHAR(10) NOT NULL DEFAULT 'CONFIRMED'

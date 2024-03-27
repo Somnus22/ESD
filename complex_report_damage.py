@@ -99,7 +99,7 @@ def update_rental_log(report):
 
     # Invoke the rental log microservice
     print('\n-----Invoking rental log microservice-----')
-    rental_log_result = invoke_http(rental_log_URL + "/" + report['vehicle_id'], method='PUT', json=report['vehicle_id'])
+    rental_log_result = invoke_http(rental_log_URL + "/cancel", method='PUT', json=report)
     print('rental_log_result:', rental_log_result)
     return rental_log_result
 
