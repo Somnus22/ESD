@@ -245,7 +245,6 @@ def book_car():
         # Continue as before
         closest_car = all_cars[closest_car_index]
     
-
         
         closest_car.availability = "Booked"  # Update availability
         db.session.commit()

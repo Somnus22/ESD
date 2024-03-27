@@ -15,14 +15,14 @@ CORS(app)
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
-app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:root@localhost:8889/Rental_log'
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/rental_log'
 
 db = SQLAlchemy(app)
 
 class Rental_log(db.Model):
     __tablename__ = 'rental_log'
-    log_id = db.Column(db.Integer, primary_key=True)
+    log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     log_entry_time = db.Column(db.DateTime, nullable=False, default=datetime.now)
     vehicle_id = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, nullable=False)
@@ -32,6 +32,7 @@ class Rental_log(db.Model):
         return {"log_id": self.log_id, "log_entry_time":self.log_entry_time, "vehicle_id": self.vehicle_id, "user_id": self.user_id,"status":self.status}
 
 #create rental log    
+#userID/VehicleID/Latitude/Longitude 
 @app.route("/rental_log", methods=['POST'])
 def createRentalLog():
     # JSON data validation
@@ -40,6 +41,7 @@ def createRentalLog():
         rental_data = request.get_json()
         result = processRentalLog(rental_data)
         return jsonify(result), result["code"]
+    
     else:
         data = request.get_data()
         print("Received an invalid rental log entry:")
@@ -112,6 +114,10 @@ def getRentalLog(user_id):
 def processRentalLog(rental_data):
     print("Processing a rental log entry:")
     print(rental_data)
+    new_log = Rental_log(user_id = rental_data["user_id"], vehicle_id = rental_data["vehicle_id"])
+    db.session.add(new_log)
+    db.session.commit()  # This step generates the log_id
+
     
     if "ERROR" in rental_data['user_id']:
         code = 400
@@ -125,7 +131,7 @@ def processRentalLog(rental_data):
     return {
         'code': code,
         'data': {
-            'log_id': rental_data['log_id']
+            'log_id': new_log.log_id
         },
         'message': message
     }
