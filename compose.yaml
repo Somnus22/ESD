@@ -22,7 +22,9 @@ services:
     image: car:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/Cars
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/Cars
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/Cars
+
       PYTHONUNBUFFERED: 1
       TZ: Asia/Singapore
  
@@ -36,7 +38,9 @@ services:
     image: rental:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/rental_log
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/rental_log
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/rental_log
+
       PYTHONUNBUFFERED: 1
       TZ: Asia/Singapore
       
@@ -50,7 +54,9 @@ services:
     image: report:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/report
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/report
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/report
+
       PYTHONUNBUFFERED: 1
       TZ: Asia/Singapore
 
@@ -64,7 +70,9 @@ services:
     image: users:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/users
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/users
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/users
+
       PYTHONUNBUFFERED: 1
       TZ: Asia/Singapore
   ###############################################
