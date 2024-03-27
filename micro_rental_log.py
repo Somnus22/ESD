@@ -6,8 +6,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc
-
-
+from os import environ
 from datetime import datetime
 
 app = Flask(__name__)
@@ -16,7 +15,8 @@ CORS(app)
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/rental_log'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/rental_log'
 
 db = SQLAlchemy(app)
 
@@ -86,6 +86,27 @@ def update_log_entry(vehicle_id):
                 "message": "An error occurred while updating the rental log. " + str(e)
             }
         ), 500
+    
+#get rental log    
+@app.route("/rental_log/<user_id>", methods=['GET'])
+def getRentalLog(user_id):
+    # JSON data validation
+    log = db.session.scalars(
+        db.select(Rental_log).filter_by(User_Id=user_id).order_by(desc(Rental_log.Log_Entry_Time))).first()
+
+    if log:
+        return jsonify(
+            {
+                "code": 200,
+                "data": log.json()
+            }
+        )
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Booking not found."
+        }
+    ), 404
         
         
 def processRentalLog(rental_data):

@@ -2,16 +2,16 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import os, sys
-
+from os import environ
 import requests
 from invokes import invoke_http
 
 app = Flask(__name__)
 CORS(app)
 
-report_URL = "http://localhost:5003/report"
-car_inventory_URL = "http://localhost:5000/cars"
-rental_log_URL = "http://localhost:5002/rental_log"
+report_URL = environ.get("report_URL") or "http://localhost:5003/report"
+car_inventory_URL = environ.get("car_inventory_URL") or "http://localhost:5000/cars"
+rental_log_URL = environ.get("rental_log_URL") or "http://localhost:5002/rental_log"
 
 #create report
 @app.route("/create_report", methods=['POST'])
@@ -54,9 +54,10 @@ def processReportDamage(report):
     
     # Update car status as "Damaged" in car inventory
     print('\n\n-----Invoking car inventory microservice-----')
-    update_result = invoke_http(car_inventory_URL +'/' + report['vehicle_id'] , method="PUT", json = report['vehicle_id'])
+    update_result = invoke_http(car_inventory_URL +'/' + report['vehicle_id'] , method="PUT")
     print('update_result:', update_result)
     print("\nUpdated car availability to 'Damaged'.\n")
+    return update_result
 
 #cancel booking
 @app.route("/cancel", methods=['POST'])
@@ -93,6 +94,7 @@ def update_rental_log(report):
     print('\n-----Invoking rental log microservice-----')
     rental_log_result = invoke_http(rental_log_URL + "/" + report['vehicle_id'], method='PUT', json=report['vehicle_id'])
     print('rental_log_result:', rental_log_result)
+    return rental_log_result
 
 
 

@@ -1,21 +1,19 @@
 from decimal import Decimal
 import json
-import logging
-import threading
-import time
 from flask import Flask, request, jsonify,render_template,current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import pika
+import requests
 import amqp_connection
-import math
-
-from sqlalchemy import Numeric, asc, func
+from sqlalchemy import event
+from os import environ
+from sqlalchemy import  Numeric, asc, func
 
 app = Flask(__name__)
 CORS(app)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:root@localhost:8889/Cars'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost:3306/Cars'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -45,6 +43,7 @@ class Cars(db.Model):
     def json(self):
         return {"Vehicle_Id": self.Vehicle_Id, "CarType": self.CarType, "Brand": self.Brand, "Model": self.Model,"Latitude": self.Latitude, "Longitude": self.Longitude, "Availability": self.Availability, "Per_Hr_Price": self.Per_Hr_Price}
 
+#showing all the cars that are available
 @app.route("/cars")
 def get_all():
     carList = db.session.scalars(db.select(Cars)).all()
@@ -65,45 +64,112 @@ def get_all():
         }
     ), 404
 
-#returning the cars that are close to me 
-#for car search
-@app.route("/cars/locationNearMe", methods = ["GET"])
+@app.route("/cars/<vehicle_id>", methods=['GET'])
+def getCarByCarID(vehicle_id):
+    car = db.session.scalars(
+    	db.select(Cars).filter_by(Vehicle_Id=vehicle_id)
+        .limit(1)).first()
+
+
+    if car:
+        return jsonify(
+            {
+                "code": 200,
+                "data": car.json()
+            }
+        )
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Car not found."
+        }
+    ), 404
+
+#Google distance matrix
+def get_distance_matrix(origins, destinations, api_key):
+    """Fetch distances from Google Distance Matrix API."""
+    distance_matrix_url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+    payload = {
+        'origins': '|'.join(origins),
+        'destinations': '|'.join(destinations),
+        'key': api_key
+    }
+    response = requests.get(distance_matrix_url, params=payload)
+    return response.json()
+
+
+#returning cars that are near to me
+@app.route("/cars/locationNearMe", methods=["GET"])
 def find_by_nearest_distance():
-    data = request.get_json()
-    Latitude = data['lat']
-    Longitude = data['long']
-    # car_type = data.get('type') 
     
-        
-    if Latitude is not None and Longitude is not None:
-        all_cars = db.session.query(Cars).filter_by(
-            Availability = "Unbooked"
-        ).all()
-        if all_cars:
-            all_cars.sort(key=lambda car: haversine(car.Latitude, car.Longitude, Latitude, Longitude))    
-            return jsonify({"code": 200, "CarList": [car.json() for car in all_cars]})
-        
+    Latitude = request.args.get('lat')  
+    Longitude = request.args.get('long')
+    # Expecting 'lat,long
+    user_location = f"{Latitude},{Longitude}"
+    
+    all_cars = Cars.query.filter_by(Availability="Unbooked").all()
+    if not all_cars:
         return jsonify({"code": 404, "message": "No available cars found"}), 404
-    
-    return jsonify({"code": 405, "error": "User location error"})
-    
-def haversine(lat1, lon1, lat2, lon2):
-    """
-    Calculate the great circle distance between two points 
-    on the earth (specified in decimal degrees)
-    """
-    # Convert latitude and longitude from decimal degrees to radians
-    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
 
-    # Haversine formula
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    radius_of_earth = 6371  # Radius of the Earth in kilometers
-    distance = radius_of_earth * c
+    # Prepare to call the Distance Matrix API
+    destinations = [f"{car.Latitude},{car.Longitude}" for car in all_cars]
+    origins = [f"{Latitude},{Longitude}"]
+    api_key = 'AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ'
+    url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+    payload = {
+        'origins': '|'.join(origins),
+        'destinations': '|'.join(destinations),
+        'key': api_key
+    }
+    response = requests.get(url, params=payload)
+    distances_response = get_distance_matrix([user_location], destinations, "AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ")
 
-    return distance
+    
+    
+    elements = distances_response['rows'][0]['elements']
+
+    # Lists to hold your data
+    distance_values = []
+    distance_texts = []
+
+    # Iterate over each element
+    for elem in elements:
+            # Check if the status is OK to safely access 'distance' and 'duration'
+        if elem['status'] == 'OK':
+                # Now we're sure 'distance' exists, we can safely access it
+            distance_values.append(elem['distance']['value'])
+            distance_texts.append(elem['distance']['text'])
+        else:
+                # For elements with ZERO_RESULTS or any status other than OK,
+                # append None or a placeholder to indicate the data isn't available
+            distance_values.append(None)  # or a large value like float('inf')
+            distance_texts.append("Not Available")
+    
+        # Assign a large value to 'None' entries to ensure they are not selected as the minimum
+        distance_values_with_default = [value if value is not None else float('inf') for value in distance_values]
+
+        # Now find the index of the minimum value in this new list
+        closest_car_index = distance_values_with_default.index(min(distance_values_with_default))
+        closest_car = all_cars[closest_car_index]
+        
+        car_distance_pairs = zip(all_cars, distance_values_with_default)
+
+# Step 2: Sort the cars by distance (ascending order), placing 'inf' values at the end
+        sorted_pairs = sorted(car_distance_pairs, key=lambda pair: pair[1])
+
+        # To sort in descending order based on distance, you can reverse the list
+        # But usually, we want the nearest (smallest distance) first, hence no reverse in this context
+        # If you truly need descending order, add reverse=True to the sorted function
+
+        # Step 3: Extract the cars in sorted order for the response
+        sorted_cars = [pair[0] for pair in sorted_pairs]
+
+        # Now, assuming you have a method to serialize a car object, e.g., car.json()
+        # Convert each car in the sorted list to its JSON representation
+        sorted_cars_json = [car.json() for car in sorted_cars]
+                
+
+    return jsonify({"code": 200, "CarList": sorted_cars_json})
 
 
 #returning cars that are available
@@ -126,107 +192,179 @@ def availability():
             return jsonify({"code": 404, "message":error_message}), 404
 
 
-#receive notification that they want to book the car based on distance
-#Car rental
-@app.route("/cars/book", methods = ["PUT"])
+@app.route("/cars/book", methods=["PUT"])
 def book_car():
     data = request.get_json()
+    if not data or 'lat' not in data or 'long' not in data:
+        return jsonify({"code": 400, "error": "Missing latitude or longitude"}), 400
+    
     Latitude = data['lat']
     Longitude = data['long']
-    car_type = data.get('type', "")  # Default to empty string if 'type' not in data
-
+    car_type = data.get('type', "")  # Allows for an optional car type filter
     
-    #book whatever cars first     
+    user_location = f"{Latitude},{Longitude}"
+    
+    query_filter = Cars.query.filter_by(Availability="Unbooked")
+    if car_type:
+        query_filter = query_filter.filter_by(CarType=car_type)
+    
+    all_cars = query_filter.all()
+    
+    if not all_cars:
+        return jsonify({"code": 404, "message": "No available cars found of the requested type"}), 404
+    
+    destinations = [f"{car.Latitude},{car.Longitude}" for car in all_cars]
+    distances_response = get_distance_matrix([user_location], destinations, "AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ")
+    
     if car_type == "":
-        if Latitude is not None and Longitude is not None:
-            all_cars = db.session.query(Cars).filter_by(
-                Availability = "Unbooked"
-            ).all()
-            if all_cars:
-                sorted_cars = sorted(all_cars, key=lambda car: haversine(car.Latitude, car.Longitude, Latitude, Longitude))
-                first_car = sorted_cars[0]
-                if first_car:
-                    all_cars.availability = "Booked"
-                    db.session.commit()
-                    good_message =  "Car booked successfully."
-                    # send_message_to_queue(good_message)
-                    return jsonify({"code": 200, "message": good_message, "Longitude": first_car.Longitude, "Latitude": first_car.Latitude}, 200)
-                else:
-                    bad_message =  "Car not available or does not exist."
-                    # send_message_to_queue(bad_message)
-                    return jsonify({"code": 404, "message": bad_message}), 404
-    else:
-    #book cars based on the type 
-        if Latitude is not None and Longitude is not None:
-            all_cars = db.session.query(Cars).filter_by(
-                CarType = data['type']
-            ).all()
-            if all_cars:
-                sorted_cars = sorted(all_cars, key=lambda car: haversine(car.Latitude, car.Longitude, Latitude, Longitude))
-                car_id = data.get('car_id')
-                matched_car  = None
-                for car in sorted_cars:
-                    if car.Vehicle_Id == car_id:  # Assuming the car object has an 'id' attribute that holds its ID
-                        matched_car = car
-                        break
-                if matched_car:
-                    matched_car.availability = "Booked"
-                    db.session.commit()
-                    good_message =  "Car booked successfully."
-                    send_message_to_queue(good_message)
-                    return jsonify({"code": 200, "message":good_message}), 200
-                else:
-                    bad_message =  "Car not available or does not exist."
-                    send_message_to_queue(bad_message)
-                    return jsonify({"code": 404, "message": bad_message}), 404
+        elements = distances_response['rows'][0]['elements']
+
+    # Lists to hold your data
+        distance_values = []
+        distance_texts = []
+
+    # Iterate over each element
+        for elem in elements:
+            # Check if the status is OK to safely access 'distance' and 'duration'
+            if elem['status'] == 'OK':
+                # Now we're sure 'distance' exists, we can safely access it
+                distance_values.append(elem['distance']['value'])
+                distance_texts.append(elem['distance']['text'])
+            else:
+                # For elements with ZERO_RESULTS or any status other than OK,
+                # append None or a placeholder to indicate the data isn't available
+                distance_values.append(None)  # or a large value like float('inf')
+                distance_texts.append("Not Available")
+    
+        # Assign a large value to 'None' entries to ensure they are not selected as the minimum
+        distance_values_with_default = [value if value is not None else float('inf') for value in distance_values]
+
+        # Now find the index of the minimum value in this new list
+        closest_car_index = distance_values_with_default.index(min(distance_values_with_default))
+
+        # Continue as before
+        closest_car = all_cars[closest_car_index]
+    
+
+        
+        closest_car.Availability = "Booked"  # Update availability
+        db.session.commit()
+        
+        return jsonify({"code": 200, "message": "Car booked successfully.", "CarID": closest_car.Vehicle_Id}), 200
+    
+    return jsonify({"code": 500, "message": "Error fetching distances from Google API"}), 500
+        
                 
-                
-def background_task(app,car_id, user_id):
-    with app.app_context():
-        logging.basicConfig(level=logging.INFO)
-        try:
-            while True:
-                
-                message = {
-                        'car_id': car_id,
-                        'user_id': user_id,
-                        'message': "A user is waiting for car availability."
-                }
-                logging.info(f"Sending message: {message}")
-                send_message_to_queue(json.dumps(message))
-                
-                time.sleep(60)  # Sleep for 60 seconds
-        except Exception as e:
-            logging.error(f"Error in background task: {str(e)}")
+# listen to the changes in the sql and update and send to the notif
+def after_car_status_change(mapper, connection, target):
+    if target.Availability == "Unbooked":
+        message = {
+            'car_id': target.Vehicle_Id,
+            'message': "The car you were waiting for is now available."
+        }
+        send_message_to_queue(json.dumps(message))
+
+# Attach the event listener to the Car model
+event.listen(Cars, 'after_update', after_car_status_change)
+
         
 #Wait for car availability, if user wants a particular car
 @app.route("/cars/waitForAvailability", methods=["POST"])
 def wait_for_availability():
     data = request.get_json()
     car_id = data['Vehicle_Id']
-    user_id = data.get('User_ID')  # Assuming contact is the way to notify the user
 
-    # Message you want to send to the queue
-    # message = {
-    #     'car_id': car_id,
-    #     'user_id': user_id,
-    #     'message': "A user is waiting for car availability."
-    # }
     reservedCar = db.session.query(Cars).filter_by(
                 Vehicle_Id = car_id
         ).first()
     
-    if(reservedCar.Availability == "Booked"):
-        thread = threading.Thread(target=background_task, args=(current_app._get_current_object(),car_id, user_id))
-        thread.daemon = True  # Daemonize thread
-        thread.start()
+    if reservedCar.Availability == "Booked":
+        # No need to start a background task, the event listener will handle it
         message = "You've been added to the waiting list. We will notify you when the car becomes available."
     else:
         message = "Car is available."
-
     return jsonify({"message": message}), 200
     
+#User ends trip then change the booked to unbooked
+@app.route("/end_trip/<car_id>", methods=["POST"])
+def end_trip(car_id):
+    # Here you would update the car's status to 'Unbooked' in your database
 
+    try:
+        reservedCar = db.session.query(Cars).filter_by(Vehicle_Id=car_id).first()
+        if reservedCar:
+            reservedCar.Availability = "Unbooked"
+            db.session.commit()
+            
+            # Now, check if any user is waiting for this car to become available
+            # This could be a function that checks a waiting list and notifies the user(s)
+            
+            return jsonify({"message": "Trip ended and car is now available."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/endtrip')
+def endtripweb():
+    return render_template('endtrip.html')
+
+@app.route('/get_car_locations')
+def get_car_locations():
+    # Connect to your database
+    cars = db.session.query(Cars).all()
+    
+    # Replace 'cars' with your actual table name and adjust column names accordingly
+
+    
+    # Convert to a list of dicts to jsonify
+    locations_dict = [{"latitude": car.Latitude, "longitude": car.Longitude} for car in cars]
+    
+
+    
+    return jsonify(locations_dict)
+
+@app.route('/carLocations')
+def carLocation():
+    return render_template('googleMaps.html')
+
+def send_message_to_queue(message):
+    try:
+        channel = amqp_connection.create_connection().channel()
+        channel.basic_publish(exchange=exchangename, routing_key="car.request", body=json.dumps(message))
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+r_queue_name = 'Request_Car'
+
+exchangename = "notifications_exchange"
+exchangetype = "topic"
+
+def receiveNotifications(channel):
+    
+    try:
+        # set up a consumer and start to wait for coming messages
+        channel.basic_consume(queue=r_queue_name, on_message_callback=callback, auto_ack=True)
+        print('Notifications: Consuming from queue:', r_queue_name)
+        channel.start_consuming()  # an implicit loop waiting to receive messages;
+            #it doesn't exit by default. Use Ctrl+C in the command window to terminate it.
+        if(r_queue_name == "Request_Car"):
+            book_car(r_queue_name)
+    
+    except pika.exceptions.AMQPError as e:
+        print(f"Notifications: Failed to connect: {e}") # might encounter error if the exchange or the queue is not created
+
+    except KeyboardInterrupt:
+        print("Notifications: Program interrupted by user.") 
+
+def callback(channel, method, properties, body): # required signature for the callback; no return
+    print("\nNotifications: Received a Notification by " + __file__)
+    processNotifications(json.loads(body))
+    print()
+    
+def processNotifications(notifications):
+    print("Notifications: Recording notifications:")
+    print(notifications)
+    
 # update car availability status as "damaged"
 @app.route("/cars/<vehicle_id>", methods=['PUT'])
 def update_availability(vehicle_id):
@@ -265,51 +403,9 @@ def update_availability(vehicle_id):
                 "message": "An error occurred while updating the order. " + str(e)
             }
         ), 500
-
-def send_message_to_queue(message):
-    try:
-        channel = amqp_connection.create_connection().channel()
-        channel.basic_publish(exchange=exchangename, routing_key="car.request", body=json.dumps(message))
-        return jsonify({"status": "success"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Instead of hardcoding the values, we can also get them from the environ as shown below
-# a_queue_name = environ.get('Activity_Log') #Activity_Log
-r_queue_name = 'Request_Car'
-
-exchangename = "notifications_exchange"
-exchangetype = "topic"
-
-def receiveNotifications(channel):
     
-    try:
-        # set up a consumer and start to wait for coming messages
-        channel.basic_consume(queue=r_queue_name, on_message_callback=callback, auto_ack=True)
-        print('Notifications: Consuming from queue:', r_queue_name)
-        channel.start_consuming()  # an implicit loop waiting to receive messages;
-            #it doesn't exit by default. Use Ctrl+C in the command window to terminate it.
-        if(r_queue_name == "Request_Car"):
-            book_car(r_queue_name)
-    
-    except pika.exceptions.AMQPError as e:
-        print(f"Notifications: Failed to connect: {e}") # might encounter error if the exchange or the queue is not created
-
-    except KeyboardInterrupt:
-        print("Notifications: Program interrupted by user.") 
-
-def callback(channel, method, properties, body): # required signature for the callback; no return
-    print("\nNotifications: Received a Notification by " + __file__)
-    processNotifications(json.loads(body))
-    print()
-    
-def processNotifications(notifications):
-    print("Notifications: Recording notifications:")
-    print(notifications)
-    
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=5000, debug=True)
+    app.run(host='0.0.0.0',port=5000, debug=True,threaded=True)
 
 #ssl_context=('cert.pem', 'key.pem'),host='0.0.0.0', 
 
