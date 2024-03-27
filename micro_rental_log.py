@@ -52,8 +52,10 @@ def createRentalLog():
         
 
 #update rental log as cancelled      
-@app.route("/rental_log/<vehicle_id>", methods=['PUT'])
-def update_log_entry(vehicle_id):
+@app.route("/rental_log/cancel", methods=['PUT'])
+def update_log_entry():
+    report = request.json.get_json()
+    vehicle_id = report['vehicle_id']
     try:
         rental_log = db.session.scalars(
         db.select(Rental_log).filter_by(vehicle_id=vehicle_id).order_by(desc(Rental_log.log_entry_time))).first()
