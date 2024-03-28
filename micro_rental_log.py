@@ -15,23 +15,25 @@ CORS(app)
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
-app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:root@localhost:8889/Rental_log'
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/rental_log'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
 
 db = SQLAlchemy(app)
 
 class Rental_log(db.Model):
     __tablename__ = 'rental_log'
-    Log_Id = db.Column(db.Integer, primary_key=True)
-    Log_Entry_Time = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    Vehicle_Id = db.Column(db.Integer, nullable=False)
-    User_Id = db.Column(db.Integer, nullable=False)
-    Status = db.Column(db.String(10), nullable=False)
+    log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    log_entry_time = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    vehicle_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(10), nullable=False, default='CONFIRMED')
 
     def json(self):
-        return {"Log_Id": self.Log_Id, "Log_Entry_Time":self.Log_Entry_Time, "Vehicle_Id": self.Vehicle_Id, "User_Id": self.User_Id,"Status":self.Status}
+        return {"log_id": self.log_id, "log_entry_time":self.log_entry_time, "vehicle_id": self.vehicle_id, "user_id": self.user_id,"status":self.status}
 
 #create rental log    
+#userID/VehicleID/Latitude/Longitude 
 @app.route("/rental_log", methods=['POST'])
 def createRentalLog():
     # JSON data validation
@@ -40,6 +42,7 @@ def createRentalLog():
         rental_data = request.get_json()
         result = processRentalLog(rental_data)
         return jsonify(result), result["code"]
+    
     else:
         data = request.get_data()
         print("Received an invalid rental log entry:")
@@ -50,24 +53,26 @@ def createRentalLog():
         
 
 #update rental log as cancelled      
-@app.route("/rental_log/<vehicle_id>", methods=['PUT'])
-def update_log_entry(vehicle_id):
+@app.route("/rental_log/cancel", methods=['PUT'])
+def update_log_entry():
+    report = request.json.get_json()
+    vehicle_id = report['vehicle_id']
     try:
         rental_log = db.session.scalars(
-        db.select(Rental_log).filter_by(Vehicle_Id=vehicle_id).order_by(desc(Rental_log.Log_Entry_Time))).first()
+        db.select(Rental_log).filter_by(vehicle_id=vehicle_id).order_by(desc(Rental_log.log_entry_time))).first()
         if not rental_log:
             return jsonify(
                 {
                     "code": 404,
                     "data": {
-                        "Vehicle_id": vehicle_id
+                        "vehicle_id": vehicle_id
                     },
                     "message": "Rental log for Vehicle ID"  + str(vehicle_id) + "was not found."
                 }
             ), 404
 
         # update availability
-        rental_log.Status = "Cancelled"
+        rental_log.status = "Cancelled"
         db.session.commit()
         return jsonify(
             {
@@ -80,8 +85,8 @@ def update_log_entry(vehicle_id):
             {
                 "code": 500,
                 "data": {
-                    "Vehicle_Id": vehicle_id,
-                    "Status": "Cancelled"
+                    "vehicle_id": vehicle_id,
+                    "status": "Cancelled"
                 },
                 "message": "An error occurred while updating the rental log. " + str(e)
             }
@@ -92,7 +97,7 @@ def update_log_entry(vehicle_id):
 def getRentalLog(user_id):
     # JSON data validation
     log = db.session.scalars(
-        db.select(Rental_log).filter_by(User_Id=user_id).order_by(desc(Rental_log.Log_Entry_Time))).first()
+        db.select(Rental_log).filter_by(user_id=user_id).order_by(desc(Rental_log.log_entry_time))).first()
 
     if log:
         return jsonify(
@@ -112,8 +117,12 @@ def getRentalLog(user_id):
 def processRentalLog(rental_data):
     print("Processing a rental log entry:")
     print(rental_data)
+    new_log = Rental_log(user_id = rental_data["user_id"], vehicle_id = rental_data["vehicle_id"])
+    db.session.add(new_log)
+    db.session.commit()  # This step generates the log_id
+
     
-    if "ERROR" in rental_data['userID']:
+    if "ERROR" in rental_data['user_id']:
         code = 400
         message = 'Failed creation of rental log entry.'
     else:
@@ -125,7 +134,7 @@ def processRentalLog(rental_data):
     return {
         'code': code,
         'data': {
-            'logID': rental_data['logID']
+            'log_id': new_log.log_id
         },
         'message': message
     }

@@ -5,7 +5,6 @@ from os import environ
 import requests
 from invokes import invoke_http
 
-import pika
 import json
 
 
@@ -13,7 +12,7 @@ app = Flask(__name__)
 CORS(app)
 
 user_URL = environ.get('user_URL') or "http://localhost:5001/user"
-car_inventory_URL = environ.get('car_inventroy_URL') or "http://localhost:5000/cars"
+car_inventory_URL = environ.get('car_inventory_URL') or "http://localhost:5000/cars"
 rental_log_URL = environ.get("rental_log_URL") or "http://localhost:5002/rental_log"
 
 @app.route("/car_rental", methods=['POST'])
@@ -25,8 +24,6 @@ def car_rental():
             print("\nReceived a rental request in JSON:", rental_info)
 
 
-            # do the actual work
-            # 1. Send order info {cart items}
             result = processCarRental(rental_info)
             print('\n------------------------')
             print('\nresult: ', result)
@@ -41,7 +38,7 @@ def car_rental():
 
             return jsonify({
                 "code": 500,
-                "message": "place_order.py internal error: " + ex_str
+                "message": "complex_car_booking.py internal error: " + ex_str
             }), 500
 
     # if reached here, not a JSON request.
@@ -53,18 +50,15 @@ def car_rental():
 def processCarRental(rental_info):
 
     print('\n-----Invoking Car Inventory microservice-----')
-    car_inventory_update = invoke_http(car_inventory_URL)
+    car_inventory_update = invoke_http(car_inventory_URL + "/book", method="PUT", json = rental_info)
     print('Car Rental Result:', car_inventory_update)
   
 
-    # Check the order result; if a failure, send it to the error microservice.
     code = car_inventory_update["code"]
     message = json.dumps(car_inventory_update)
 
  
     if code not in range(200, 300):
-        # Inform the error microservice
-        #print('\n\n-----Invoking error microservice as order fails-----')
         print('\n\n-----Publishing the error message with for Car Inventory Microservice-----')
 
        
@@ -73,19 +67,9 @@ def processCarRental(rental_info):
         return {
             "code": 500,
             "data": {"Car Inventory Update": car_inventory_update},
-            "message": "Car Cannot Be Booked"
+            "message": "Car cannot be booked"
         }
 
-    # Notice that we are publishing to "Activity Log" only when there is no error in order creation.
-    # In http version, we first invoked "Activity Log" and then checked for error.
-    # Since the "Activity Log" binds to the queue using '#' => any routing_key would be matched 
-    # and a message sent to “Error” queue can be received by “Activity Log” too.
-
-    
-    
-    
-    # 5. Send new order to shipping
-    # Invoke the shipping record microservice
     print('\n\n-----Invoking users microservice-----')    
     user_id = rental_info.get('user_id')
     user_info= invoke_http(

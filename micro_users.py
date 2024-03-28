@@ -3,7 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from os import environ
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/users'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
+#app.config['SQLALCHEMY_DATABASE_URI'] ='mysql+mysqlconnector://root@localhost:3306/User'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
@@ -13,13 +14,13 @@ db = SQLAlchemy(app)
 class Users(db.Model):
     __tablename__ = 'users'
 
-    userID = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), nullable=False)
-    phoneNumber = db.Column(db.Integer, nullable=False)
-    emailAddress = db.Column(db.String(64), nullable=False)
+    phone_number = db.Column(db.Integer, nullable=False)
+    email_address = db.Column(db.String(64), nullable=False)
 
     def json(self):
-        return {"userID": self.userID, "name": self.name, "phoneNumber": self.phoneNumber, "emailAddress": self.emailAddress}
+        return {"user_id": self.user_id, "name": self.name, "phone_number": self.phone_number, "email_address": self.email_address}
 
 
 @app.route("/user")
@@ -44,10 +45,10 @@ def get_all():
 
 
 
-@app.route("/user/<int:userID>")
-def find_by_userID(userID):
+@app.route("/user/<int:user_id>")
+def find_by_userID(user_id):
     user = db.session.scalars(
-    	db.select(Users).filter_by(userID=userID)
+    	db.select(Users).filter_by(user_id=user_id)
         .limit(1)).first()
 
 
@@ -71,7 +72,7 @@ def create_user():
     data = request.get_json()
     email = data["emailAddress"]
     if (db.session.scalars(
-      db.select(Users).filter_by(emailAddress = email).
+      db.select(Users).filter_by(Email_Address = email).
       limit(1)
       ).first()
       ):
@@ -79,7 +80,7 @@ def create_user():
             {
                 "code": 400,
                 "data": {
-                    "emailAddress": email
+                    "Email": email
                 },
                 "message": "User already exists."
             }
@@ -94,7 +95,7 @@ def create_user():
             {
                 "code": 500,
                 "data": {
-                    "emailAddress": email
+                    "Email": email
                 },
                 "message": "An error occurred creating the user."
             }

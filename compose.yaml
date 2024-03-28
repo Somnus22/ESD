@@ -22,8 +22,11 @@ services:
     image: car:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/Cars
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/Cars
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/Cars
+
       PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
  
   #######################################################
   # Rental Log
@@ -35,8 +38,11 @@ services:
     image: rental:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/rental_log
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/rental_log
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/rental_log
+
       PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
       
   #################################################
   # Report
@@ -48,42 +54,27 @@ services:
     image: report:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/report
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/report
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/report
+
       PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
 
   ###################################
   # Users
   ###################################
-  #users:
-  #  build:
-  #    context: ./
-  #    dockerfile: users.dockerfile
-  #  image: users:project
-  #  restart: always
-  #  environment:
-  #    PYTHONUNBUFFERED: 1
+  users:
+    build:
+      context: ./
+      dockerfile: users.dockerfile
+    image: users:project
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/users
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/users
 
-  ###############################################
-  # Car Booking
-  ###############################################
-  #car_booking:
-  #  build:
-  #    context: ./
-  #    dockerfile: car_booking.dockerfile
-  #  image: car_booking:project
-  #  restart: always
-  #  depends_on:
-  #    - users
-  #    - car_inventory
-  #    - rental_log
-  #  environment:
-  #    user_URL: http://users:5001/user
-  #    car_inventory_URL: http://car_inventory:5000/cars
-  #    rental_log_URL: http://rental_log:5002/rental_log
-  #    PYTHONUNBUFFERED: 1
-  #  ports:
-  #    - "5100:5100"
-
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
   ###############################################
   # Car Search
   ###############################################
@@ -103,8 +94,28 @@ services:
   #    rental_log_URL: http://rental_log:5002/rental_log
   #    PYTHONUNBUFFERED: 1
   #  ports:
-  #    - "5101:5101"
-  
+  #    - "5100:5100"
+  ###############################################
+  # Car Booking
+  ###############################################
+  car_booking:
+    build:
+      context: ./
+      dockerfile: car_booking.dockerfile
+    image: car_booking:project
+    restart: always
+    depends_on:
+      - users
+      - car_inventory
+      - rental_log
+    environment:
+      user_URL: http://users:5001/user
+      car_inventory_URL: http://car_inventory:5000/cars
+      rental_log_URL: http://rental_log:5002/rental_log
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
+    ports:
+      - "5101:5101"
   ###############################################
   # Report Damage
   ###############################################
@@ -123,5 +134,6 @@ services:
       rental_log_URL: http://rental_log:5002/rental_log
       report_URL: http://report:5003/report
       PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
     ports:
       - "5102:5102"
