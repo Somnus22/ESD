@@ -4,13 +4,13 @@ services:
   ####################################
   # RabbitMQ: The messaging broker   
   ####################################
-  #rabbitmq:
-  #  image: rabbitmq:3-management
-  #  hostname: esd-rabbit
-  #  restart: always
-  #  ports:
-  #    - "5672:5672"
-  #    - "15672:15672"
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: esd-rabbit
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
 
   ###################################
   # Car_inventory
@@ -78,23 +78,23 @@ services:
   ###############################################
   # Car Search
   ###############################################
-  #car_search:
-  #  build:
-  #    context: ./
-  #    dockerfile: car_search.dockerfile
-  #  image: car_search:project
-  #  restart: always
-  #  depends_on:
-  #    - users
-  #    - car_inventory
-  #    - rental_log
-  #  environment:
-  #    user_URL: http://users:5001/user
-  #    car_inventory_URL: http://car_inventory:5000/cars
-  #    rental_log_URL: http://rental_log:5002/rental_log
-  #    PYTHONUNBUFFERED: 1
-  #  ports:
-  #    - "5100:5100"
+  car_search:
+    build:
+      context: ./
+      dockerfile: car_search.dockerfile
+    image: car_search:project
+    restart: always
+    depends_on:
+      - users
+      - car_inventory
+      - rental_log
+    environment:
+      user_URL: http://users:5001/user
+      car_inventory_URL: http://car_inventory:5000/cars
+      rental_log_URL: http://rental_log:5002/rental_log
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "5100:5100"
   ###############################################
   # Car Booking
   ###############################################
