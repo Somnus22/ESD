@@ -7,7 +7,7 @@ from os import environ
 app = Flask(__name__)
 CORS(app)
 
-car_inventory_URL = environ.get('car_inventroy_URL') or "http://localhost:5000/cars"
+car_inventory_URL = environ.get('car_inventory_URL') or "http://localhost:5000/cars"
 
 
 @app.route("/findNearestCars",methods=['POST'])
