@@ -8,24 +8,25 @@ import os, sys
 from threading import Thread
 import requests
 from invokes import invoke_http
+from os import environ
 app = Flask(__name__)
 CORS(app) 
 
 r_queue_name = 'Request_Car'
 exchangename = "notifications_exchange"
 exchangetype="topic"
-car_inventory_URL = "http://localhost:5000/cars/waitForAvailability"
-user_URL = 'http://localhost:5001/user/'
+car_inventory_URL = environ.get("car_inventory_URL") or "http://localhost:5000/cars"
+user_URL = environ.get("user_URL") or 'http://localhost:5001/user'
 
 car_dict = {}
 
-def send_simple_message(car_id):
-    arr_of_users = car_dict[car_id]
+def send_simple_message(vehicle_id):
+    arr_of_users = car_dict[vehicle_id]
     print(arr_of_users)
     arr_of_emails = []
     for user in arr_of_users:
         print('\n-----Invoking User microservice-----')
-        get_user_details = invoke_http(user_URL + str(user))
+        get_user_details = invoke_http(user_URL + "/" + str(user))
         print('Car Wait For Availability Result:', get_user_details)
     
 
@@ -45,7 +46,7 @@ def send_simple_message(car_id):
             
 
        
-        arr_of_emails.append(get_user_details['data']['emailAddress'])
+        arr_of_emails.append(get_user_details['data']['email_address'])
         # 7. Return error
         
     
@@ -53,7 +54,7 @@ def send_simple_message(car_id):
     try:
         for email in arr_of_emails:
             print(get_user_details)
-            email_message = f"The car {car_id} you wanted to book is now available. Hurry up and book now!"
+            email_message = f"The car {vehicle_id} you wanted to book is now available. Hurry up and book now!"
             response = requests.post(
                 "https://api.mailgun.net/v3/sandboxcefaa164afc34eba9933f7f63752ee7f.mailgun.org/messages",
                 auth=("api", "a54c5ed81fe292a752f7cfd3f62c0c79-b02bcf9f-b48c4038"),
@@ -107,21 +108,21 @@ def processNotifications(notifications):
 def send_notification():
     if request.method == 'POST':
         data = request.json
-        Vehicle_Id = data.get('Vehicle_Id')
+        vehicle_id = data.get('vehicle_id')
         user_id = data.get('user_id')
         message = data.get('message')
 
-        if not all([Vehicle_Id, user_id, message]):
+        if not all([vehicle_id, user_id, message]):
             return jsonify({"error": "Missing required fields"}), 400
 
         notification_data = {
-            'Vehicle_Id': Vehicle_Id,
+            'vehicle_id': vehicle_id,
             'user_id': user_id,
             'message': message
         }
 
     print('\n-----Invoking Car Inventory microservice-----')
-    car_wait_for_availability = invoke_http(car_inventory_URL,method='POST',json = notification_data)
+    car_wait_for_availability = invoke_http(car_inventory_URL + "/waitForAvailability",method='POST',json = notification_data)
     print('Car Wait For Availability Result:', car_wait_for_availability)
   
 
@@ -144,16 +145,16 @@ def send_notification():
             "message": "User not placed on waiting list"
         }
     
-    if Vehicle_Id in car_dict:
-        car_dict[Vehicle_Id].append(user_id)
+    if vehicle_id in car_dict:
+        car_dict[vehicle_id].append(user_id)
     else:
-        car_dict[Vehicle_Id] = [user_id]
+        car_dict[vehicle_id] = [user_id]
     return {
         "code": 201,
         "data": {
             "Wait for Car Availability Update": car_wait_for_availability,
         },
-        'message' : f'User {user_id} placed on waiting list for car {Vehicle_Id}'
+        'message' : f'User {user_id} placed on waiting list for car {vehicle_id}'
     }
 
 def run_flask_app():

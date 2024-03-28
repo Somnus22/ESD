@@ -1,16 +1,20 @@
 version: "3.8"
 
+volumes:
+  rabbitmq_data:
+
 services:
   ####################################
   # RabbitMQ: The messaging broker   
   ####################################
-  #rabbitmq:
-  #  image: rabbitmq:3-management
-  #  hostname: esd-rabbit
-  #  restart: always
-  #  ports:
-  #    - "5672:5672"
-  #    - "15672:15672"
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: esd-rabbit
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
 
   ###################################
   # Car_inventory
@@ -22,12 +26,14 @@ services:
     image: car:project
     restart: always
     environment:
+      rabbit_host: rabbitmq
+      rabbit_port: 5672
       dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/Cars
     # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/Cars
 
       PYTHONUNBUFFERED: 1
       TZ: Asia/Singapore
- 
+
   #######################################################
   # Rental Log
   #######################################################
@@ -54,6 +60,7 @@ services:
     image: report:project
     restart: always
     environment:
+
       dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/report
     # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/report
 
@@ -75,26 +82,45 @@ services:
 
       PYTHONUNBUFFERED: 1
       TZ: Asia/Singapore
+  ###################################
+  # Notifications
+  ###################################
+  notifications:
+    build:
+      context: ./
+      dockerfile: notifications.dockerfile
+    image: notifications:project
+    restart: always
+    depends_on:
+      - car_inventory
+      - users
+      - rabbitmq
+    environment:
+      rabbit_host: rabbitmq
+      rabbit_port: 5672
+      car_inventory_URL: http://car_inventory:5000/cars
+      user_URL: http://users:5001/user
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
   ###############################################
   # Car Search
   ###############################################
-  #car_search:
-  #  build:
-  #    context: ./
-  #    dockerfile: car_search.dockerfile
-  #  image: car_search:project
-  #  restart: always
-  #  depends_on:
-  #    - users
-  #    - car_inventory
-  #    - rental_log
-  #  environment:
-  #    user_URL: http://users:5001/user
-  #    car_inventory_URL: http://car_inventory:5000/cars
-  #    rental_log_URL: http://rental_log:5002/rental_log
-  #    PYTHONUNBUFFERED: 1
-  #  ports:
-  #    - "5100:5100"
+  car_search:
+    build:
+      context: ./
+      dockerfile: car_search.dockerfile
+    image: car_search:project
+    restart: always
+    depends_on:
+      - car_inventory
+    environment:
+      user_URL: http://users:5001/user
+      car_inventory_URL: http://car_inventory:5000/cars
+      rental_log_URL: http://rental_log:5002/rental_log
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
+    ports:
+      - "5100:5100"
   ###############################################
   # Car Booking
   ###############################################
@@ -137,3 +163,4 @@ services:
       TZ: Asia/Singapore
     ports:
       - "5102:5102"
+    
