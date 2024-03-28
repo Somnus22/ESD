@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>End Trip</title>
+    <!-- Include Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>End Your Trip</h1>
+    <p>Implement the form or functionality here to allow users to end their trip.</p>
+    <button id="endTripButton">End Trip</button>
+
+    <script>
+    document.getElementById('endTripButton').addEventListener('click', function() {
+        const carId = 2; // Ideally, this should be dynamically set based on the specific trip/car context
+        console.log('i am clicked')
+        axios.post(`http://localhost:5000/end_trip/${carId}`, {})
+        .then(function (response) {
+            console.log('Trip ended:', response.data);
+            // Optionally, update the UI here to indicate the trip has ended
+        })
+        .catch(function (error) {
+            console.error('Error:', error);
+        });
+    });
+    </script>
+</body>
+</html>

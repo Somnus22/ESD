@@ -1,0 +1,139 @@
+version: "3.8"
+
+services:
+  ####################################
+  # RabbitMQ: The messaging broker   
+  ####################################
+  #rabbitmq:
+  #  image: rabbitmq:3-management
+  #  hostname: esd-rabbit
+  #  restart: always
+  #  ports:
+  #    - "5672:5672"
+  #    - "15672:15672"
+
+  ###################################
+  # Car_inventory
+  ###################################
+  car_inventory:
+    build:
+      context: ./
+      dockerfile: car.dockerfile
+    image: car:project
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/Cars
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/Cars
+
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
+ 
+  #######################################################
+  # Rental Log
+  #######################################################
+  rental_log:
+    build:
+      context: ./
+      dockerfile: rental_log.dockerfile
+    image: rental:project
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/rental_log
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/rental_log
+
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
+      
+  #################################################
+  # Report
+  #################################################
+  report:
+    build:
+      context: ./
+      dockerfile: report.dockerfile
+    image: report:project
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/report
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/report
+
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
+
+  ###################################
+  # Users
+  ###################################
+  users:
+    build:
+      context: ./
+      dockerfile: users.dockerfile
+    image: users:project
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/users
+    # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/users
+
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
+  ###############################################
+  # Car Search
+  ###############################################
+  #car_search:
+  #  build:
+  #    context: ./
+  #    dockerfile: car_search.dockerfile
+  #  image: car_search:project
+  #  restart: always
+  #  depends_on:
+  #    - users
+  #    - car_inventory
+  #    - rental_log
+  #  environment:
+  #    user_URL: http://users:5001/user
+  #    car_inventory_URL: http://car_inventory:5000/cars
+  #    rental_log_URL: http://rental_log:5002/rental_log
+  #    PYTHONUNBUFFERED: 1
+  #  ports:
+  #    - "5100:5100"
+  ###############################################
+  # Car Booking
+  ###############################################
+  car_booking:
+    build:
+      context: ./
+      dockerfile: car_booking.dockerfile
+    image: car_booking:project
+    restart: always
+    depends_on:
+      - users
+      - car_inventory
+      - rental_log
+    environment:
+      user_URL: http://users:5001/user
+      car_inventory_URL: http://car_inventory:5000/cars
+      rental_log_URL: http://rental_log:5002/rental_log
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
+    ports:
+      - "5101:5101"
+  ###############################################
+  # Report Damage
+  ###############################################
+  report_damage:
+    build:
+      context: ./
+      dockerfile: report_damage.dockerfile
+    image: report_damage:project
+    restart: always
+    depends_on:
+      - report
+      - car_inventory
+      - rental_log
+    environment:
+      car_inventory_URL: http://car_inventory:5000/cars
+      rental_log_URL: http://rental_log:5002/rental_log
+      report_URL: http://report:5003/report
+      PYTHONUNBUFFERED: 1
+      TZ: Asia/Singapore
+    ports:
+      - "5102:5102"
