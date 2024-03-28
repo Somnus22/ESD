@@ -1,0 +1,71 @@
+{
+    "rabbit_version": "3.12.12",
+    "rabbitmq_version": "3.12.12",
+    "product_name": "RabbitMQ",
+    "product_version": "3.12.12",
+    "users": [
+        {
+            "name": "guest",
+            "password_hash": "893eGvw8jRlxb1g6O5x8chJwkpCiMt/9glHbM2vxhR2L4OKY",
+            "hashing_algorithm": "rabbit_password_hashing_sha256",
+            "tags": [
+                "administrator"
+            ],
+            "limits": {}
+        }
+    ],
+    "vhosts": [
+        {
+            "name": "/"
+        }
+    ],
+    "permissions": [
+        {
+            "user": "guest",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        }
+    ],
+    "topic_permissions": [],
+    "parameters": [],
+    "global_parameters": [
+        {
+            "name": "internal_cluster_id",
+            "value": "rabbitmq-cluster-id-b_opphewJYH2elRuOf519w"
+        }
+    ],
+    "policies": [],
+    "queues": [
+        {
+            "name": "Request_Car",
+            "vhost": "/",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        }
+    ],
+    "exchanges": [
+        {
+            "name": "notifications_exchange",
+            "vhost": "/",
+            "type": "direct",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        }
+    ],
+    "bindings": [
+        {
+            "source": "notifications_exchange",
+            "vhost": "/",
+            "destination": "Request_Car",
+            "destination_type": "queue",
+            "routing_key": "car.request",
+            "arguments": {}
+        }
+        
+    ]
+}
