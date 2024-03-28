@@ -1,6 +1,5 @@
-from decimal import Decimal
 import json
-from flask import Flask, request, jsonify,render_template,current_app
+from flask import Flask, request, jsonify,render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import pika
@@ -8,7 +7,7 @@ import requests
 import amqp_connection
 from sqlalchemy import event
 from os import environ
-from sqlalchemy import  Numeric, asc, func
+from sqlalchemy import  Numeric
 
 app = Flask(__name__)
 CORS(app)
@@ -200,13 +199,13 @@ def book_car():
     
     Latitude = data['lat']
     Longitude = data['long']
-    car_type = data.get('type', "")  # Allows for an optional car type filter
+    car_model = data.get('model', "")  # Allows for an optional car type filter
     
     user_location = f"{Latitude},{Longitude}"
     
     query_filter = Cars.query.filter_by(availability="Unbooked")
-    if car_type:
-        query_filter = query_filter.filter_by(cartype=car_type)
+    if car_model:
+        query_filter = query_filter.filter_by(model=car_model)
     
     all_cars = query_filter.all()
     
@@ -216,7 +215,7 @@ def book_car():
     destinations = [f"{car.latitude},{car.longitude}" for car in all_cars]
     distances_response = get_distance_matrix([user_location], destinations, "AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ")
     
-    if car_type == "":
+    if car_model == "":
         elements = distances_response['rows'][0]['elements']
 
     # Lists to hold your data
