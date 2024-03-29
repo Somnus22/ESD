@@ -134,7 +134,8 @@ def processRentalLog(rental_data):
     return {
         'code': code,
         'data': {
-            'log_id': new_log.log_id
+            'log_id': new_log.log_id,
+            'log_time': new_log.log_entry_time
         },
         'message': message
     }
