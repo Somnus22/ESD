@@ -43,7 +43,7 @@
                 <button class="btn btn-primary" @click="searchForNearestCar">Search for car</button> <!--v-if="!carsList"-->
             </div>
             <hr>
-            <div class="ps-3 pt-1 mb-4" v-if="carsList && !selectedCar">
+            <div class="ps-3 pt-1 mb-4" v-if="carsList && !selectedCar && !bookedCar">
                 <div class="mb-3">
                     <div id="map"></div>
                     <h5 class="d-inline">Cars Found:</h5>
@@ -110,31 +110,33 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="car in filteredData" :key="car.Vehicle_Id">
-                            <td>{{ car.Brand }}</td>
-                            <td>{{ car.Type }}</td>
-                            <td>{{ car.Availability }}</td>
-                            <td>{{ car.Per_Hr_Price }}</td>
-                            <td>{{ car.Latitude }}</td>
-                            <td>{{ car.Longitude }}</td>
+                        <tr v-for="car in filteredData" :key="car.vehicle_id">
+                            <td>{{ car.brand }}</td>
+                            <td>{{ car.cartype }}</td>
+                            <td>{{ car.availability }}</td>
+                            <td>{{ car.per_hr_price }}</td>
+                            <td>{{ car.latitude }}</td>
+                            <td>{{ car.longitude }}</td>
                             <td><button class="btn btn-success" @click="selectedCar = car">Select</button></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             <div v-else-if="noCars">
-            
+                <div class="ps-3 pt-1 mb-4">
+                    No available cars
+                </div>
             </div>
             <div v-if="selectedCar && bookedCar == null" class="ps-3 pt-1">
                 <h5>You have selected the following car:</h5>
-                <p>Brand: {{selectedCar.Brand}}</p>
-                <p>Type: {{selectedCar.Type}}</p>
-                <p>Price per hour: {{selectedCar.Per_Hr_Price}}</p>
-                <p>Latitude: {{selectedCar.Latitude}}</p> <!-- Placeholder-->
-                <p>Longitude: {{selectedCar.Longitude}}</p> <!-- Placeholder -->
+                <p>Brand: {{selectedCar.brand}}</p>
+                <p>Type: {{selectedCar.cartype}}</p>
+                <p>Price per hour: {{selectedCar.per_hr_price}}</p>
+                <p>Latitude: {{selectedCar.latitude}}</p> <!-- Placeholder-->
+                <p>Longitude: {{selectedCar.longitude}}</p> <!-- Placeholder -->
                 <!-- <p>Distance: {{selectedCar.Distance}}</p> -->
-                <h6 v-if="selectedCar.Availability == 'Booked'"> The car is <span class="text-danger">currently booked.</span> Would you like to receive an email when it becomes available?</h6>
-                <button class="btn btn-primary mt-3" v-if="selectedCar.Availability == 'Booked'" @click="requestNotification">Notify me when the car is available</button> <!-- havent put in vue methods -->
+                <h6 v-if="selectedCar.availability == 'Booked'"> The car is <span class="text-danger">currently booked.</span> Would you like to receive an email when it becomes available?</h6>
+                <button class="btn btn-primary mt-3" v-if="selectedCar.availability == 'Booked'" @click="requestNotification">Notify me when the car is available</button> <!-- havent put in vue methods -->
                 <button class="btn btn-primary mt-2" v-else @click="bookCar">Book car</button>
             </div>
             <div v-else-if="bookedCar != null" class="ps-3 pt-1 mb-4">
@@ -144,12 +146,13 @@
         <div v-else>
             <div class="ms-3 mt-4">
                 <h5>Your booking details are as follows: </h5>
-                <p>Car Brand: {{bookedCar.Brand}}</p>
-                <p>Car Type: {{bookedCar.Type}}</p>
-                <p>Car price per hour: {{bookedCar.Per_Hr_Price}}</p>
-                <p>Car Latitude: {{bookedCar.Latitude}}</p> <!-- Placeholder-->
-                <p>Car Longitude: {{bookedCar.Longitude}}</p> <!-- Placeholder -->
-                <p>Booking Date and Time: {{bookedCar.date}}</p> <!-- Placeholder -->
+                <p>Car Brand: {{bookedCar.brand}}</p>
+                <p>Car Type: {{bookedCar.cartype}}</p>
+                <p>Car price per hour: {{bookedCar.per_hr_price}}</p>
+                <p>Car Latitude: {{bookedCar.latitude}}</p> <!-- Placeholder-->
+                <p>Car Longitude: {{bookedCar.longitude}}</p> <!-- Placeholder -->
+                <p>Car Address: {{bookedCar.address}}</p> <!-- Placeholder -->
+                <p>Booking Date and Time: {{bookedCar.bookingTime}}</p> 
             </div>
             <div v-if="reportStarted == false">
                 <h5 class="ms-3 pt-4">Have any issues with the car?</h5>
@@ -161,63 +164,6 @@
                     <h5>No booking found</h5>
                 </div>
             </div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Vehicle ID</th>
-                        <th>Brand</th>
-                        <th>Type</th>
-                        <th>Available?</th>
-                        <th>Price per hour</th>
-                        <th>Latitude</th> <!-- Placeholder-->
-                        <th>Longitude</th> <!-- Placeholder -->
-                        <!-- <th>Distance</th> -->
-                        <th>Book Car</th> <!-- Placeholder -->
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="car in filteredData" :key="car.Vehicle_Id">
-                        <td>{{ car.Vehicle_Id }}</td>
-                        <td>{{ car.Brand }}</td>
-                        <td>{{ car.Type }}</td>
-                        <td>{{ car.Availability }}</td>
-                        <td>{{ car.Per_Hr_Price }}</td>
-                        <td>{{ car.Latitude }}</td>
-                        <td>{{ car.Longitude }}</td>
-                        <td><button class="btn btn-success" @click="selectedCar = car; bookedCar = car">Select</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div v-else-if="noCars">
-            
-        </div>
-        <div v-if="selectedCar" class="ps-3 pt-1 mb-4">
-            <h5>You have selected the following car:</h5>
-            <p>Brand: {{selectedCar.Brand}}</p>
-            <p>Type: {{selectedCar.Type}}</p>
-            <p>Price per hour: {{selectedCar.Per_Hr_Price}}</p>
-            <p>Latitude: {{selectedCar.Latitude}}</p> <!-- Placeholder-->
-            <p>Longitude: {{selectedCar.Longitude}}</p> <!-- Placeholder -->
-            <!-- <p>Distance: {{selectedCar.Distance}}</p> -->
-            <h6 v-if="selectedCar.Availability == 'Booked'"> The car is <span class="text-danger">currently booked.</span> Would you like to receive an email when it becomes available?</h6>
-            <button class="btn btn-primary mt-3" v-if="selectedCar.Availability == 'Booked'" @click="requestNotification">Notify me when the car is available</button> <!-- havent put in vue methods -->
-            <button class="btn btn-primary mt-2" v-else @click="bookCar">Book car</button>
-        </div>
-        <!--If car selected and booked for report-->
-        <div v-if="selectedCar && bookedCar != null && reportMade == false" style="padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-            <h2 style="margin-bottom: 15px;">Report</h2>
-            <div style="margin-bottom: 15px;">
-                <label for="reportDate" style="display: block; margin-bottom: 5px;">Date:</label>
-                <input type="date" id="reportDate" v-model="reportDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
-            </div>
-            <div v-else-if="reportMade == true" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: 20px;">
-                <h2 class="mb-4">Report</h2>
-                <div>Report sent! Would you like to cancel your booking?</div>
-
-                <button @click="cancelBooking" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Cancel Booking</button>
-            </div>
-        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
@@ -232,10 +178,7 @@
         new Vue({
             el: '#app',
             data: {
-                carsList: [
-                    {"Vehicle_Id": 1, "Type": "Sedan", "Brand" : "Audi", "Latitude" : 1.29761, "Longitude" : 103.84940, "Availability" : "Unbooked", "Per_Hr_Price" : 6.5},
-                    {"Vehicle_Id": 2, "Type": "SUV", "Brand" : "BMW", "Latitude" : 1.35446, "Longitude" : 103.95123, "Availability" : "Booked", "Per_Hr_Price" : 7}
-            ],
+                carsList: [],
                 noCars: false,
                 filter: false,
                 userId: '1', // assume we know userId
@@ -264,26 +207,26 @@
 
                     // Apply type and status filters
                     if (this.selectedType) {
-                        filtered = filtered.filter(item => item.Type === this.selectedType);
+                        filtered = filtered.filter(item => item.cartype === this.selectedType);
                     }
                     if (this.selectedStatus) {
-                        filtered = filtered.filter(item => item.Availability === this.selectedStatus);
+                        filtered = filtered.filter(item => item.availability === this.selectedStatus);
                     }
                     if (this.selectedBrand) {
-                        filtered = filtered.filter(item => item.Brand === this.selectedBrand);
+                        filtered = filtered.filter(item => item.brand === this.selectedBrand);
                     }
 
                     // Apply distance and price sorting
                     if (this.priceSortOrder === 'ascending') {
-                        filtered.sort((a, b) => a.Per_Hr_Price - b.Per_Hr_Price);
+                        filtered.sort((a, b) => a.per_hr_price - b.per_hr_price);
                     } else {
-                        filtered.sort((a, b) => b.Per_Hr_Price - a.Per_Hr_Price);
+                        filtered.sort((a, b) => b.per_hr_price - a.per_hr_price);
                     }
 
                     if (this.distanceSortOrder === 'ascending') {
-                        // filtered.sort((a, b) => a.Per_Hr_Price - b.Per_Hr_Price);
+                        // filtered.sort((a, b) => a.per_hr_price - b.per_hr_price);
                     } else {
-                        // filtered.sort((a, b) => b.Per_Hr_Price - a.Per_Hr_Price);
+                        // filtered.sort((a, b) => b.per_hr_price - a.per_hr_price);
                     }
 
                     return filtered;
@@ -303,10 +246,9 @@
                     })
                     for (let i=0;i<this.carsList.length;i++){
                         let car = this.carsList[i];
-                        geocoder.geocode({'location' : {lat: car.Latitude, lng: car.Longitude}},  function(results, status) {
+                        geocoder.geocode({'location' : {lat: car.latitude, lng: car.longitude}},  function(results, status) {
                             if (status === 'OK') {
-                                car.Address = results[0].formatted_address
-                                console.log(car.Address)
+                                car.address = results[0].formatted_address
                             }
                         })
                         const pinStyle =  new PinElement({
@@ -317,12 +259,12 @@
                         });
                         let marker = new AdvancedMarkerElement({
                             map: this.map,
-                            title: car.Vehicle_Id.toString(),
-                            position: {lat: car.Latitude, lng: car.Longitude},
+                            title: car.vehicle_id.toString(),
+                            position: {lat: car.latitude, lng: car.longitude},
                             content: pinStyle.element
                         })
                         marker.addListener("click", () => {
-                            this.infowindow.setContent("<h5 class='h5'> Vehicle ID:" + car.Vehicle_Id + "</h5> <hr class='black'>" + "<div style='color:black;'> Address (may not be readable, use coordinates if necessary): " + car.Address + "\n Coordinates: " + car.Latitude + "," + car.Longitude + "</div>")
+                            this.infowindow.setContent("<h5 class='h5'> Vehicle ID:" + car.vehicle_id + "</h5> <hr class='black'>" + "<div style='color:black;'> Address (may not be readable, use coordinates if necessary): " + car.address + "\n Coordinates: " + car.latitude + "," + car.longitude + "</div>")
                             this.infowindow.open({
                             anchor: marker,
                             });
@@ -404,54 +346,62 @@
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(position => {
                             var xhr = new XMLHttpRequest();
-                            xhr.open("POST", "http://localhost:5100/findNearestCars");
+                            var ref = this
+                            xhr.open("POST", "http://localhost:8000/jomletsgo/searchcar");
                             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                             xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
                             xhr.onreadystatechange = function () {
                                 if (xhr.readyState === 4 && xhr.status === 200) {
-                                    // this.carsList = xhr.response.data.cars;
-                                    // this.extractOptions();
-                                    // this.initMap(position.coords);
-                                    // this.initMarkers();
+                                    let carsList = JSON.parse(xhr.response).data.cars.CarList;
+                                    for (let i=0;i<carsList.length; i++){
+                                        let car = carsList[i];
+                                        car.latitude = parseFloat(car.latitude)
+                                        car.longitude = parseFloat(car.longitude)
+                                        car.per_hr_price = parseFloat(car.per_hr_price)
+                                    }
+                                    ref.carsList = carsList
+                                    ref.extractOptions();
+                                    ref.initMap(position.coords);
+                                    ref.initMarkers();
                                 }
                             };
                             xhr.send(JSON.stringify({
                                 "lat": position.coords.latitude,
                                 "long": position.coords.longitude
                             }));
-                            this.initMap(position.coords);
-                            // this.convertCarLocationsToAddresses();
-                            this.initMarkers();
-                            this.extractOptions();
                         })
 
                     }
                 },
                 extractOptions() {
-                    this.typeOptions = [...new Set(this.carsList.map(car => car.Type))];
-                    this.statusOptions = [...new Set(this.carsList.map(car => car.Availability))];
-                    this.brandOptions = [...new Set(this.carsList.map(car => car.Brand))];
+                    this.cartypeOptions = [...new Set(this.carsList.map(car => car.cartype))];
+                    this.statusOptions = [...new Set(this.carsList.map(car => car.availability))];
+                    this.brandOptions = [...new Set(this.carsList.map(car => car.brand))];
                 },
                 selectCar(car) {
                     this.selectedCar = car;
+                    console.log(this.selectedCar)
                 },
                 bookCar(){
                     var xhr = new XMLHttpRequest();
-                    this.bookedCar = this.selectedCar; //TEMP
-                    this.bookedCar['date'] = new Date().toLocaleString();
-                    xhr.open("POST", "http://localhost:5101/car_rental");
+                    var ref = this
+                    xhr.open("POST", "http://localhost:8000/jomletsgo/bookcar");
                     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                     xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
                     xhr.onreadystatechange = function () {
-                        if (xhr.readyState === 4 && xhr.status === 200) {
+                        if (xhr.readyState === 4 && xhr.status === 201) {
                             console.log("Booking successful");
-                            this.bookedCar = this.selectedCar
-                            this.selectedCar = null 
+                            response = JSON.parse(xhr.response)
+                            ref.bookedCar = ref.selectedCar
+                            // ref.bookingTime = response.data["Rental Log"].data.log_time
+                            ref.selectedCar = null 
                         }
                     };
                     xhr.send(JSON.stringify({
                         "user_id": this.userId,
-                        "car_id": this.selectedCar.Vehicle_Id 
+                        "lat" : this.selectedCar.latitude,
+                        "long": this.selectedCar.longitude
+
                     }))
                 },
                 clearFilters() {
@@ -473,7 +423,7 @@
                     };
                     xhr.send(JSON.stringify({
                         "user_id": this.userId,
-                        "car_id": this.selectedCar.Vehicle_Id 
+                        "car_id": this.selectedCar.vehicle_id 
                     }));
                 },
                 reportCar() {
@@ -485,12 +435,12 @@
                     // Construct report data
                     const reportData = {
                         user_id: this.userId,
-                        vehicle_id: this.bookedCar.Vehicle_Id,
+                        vehicle_id: this.bookedCar.vehicle_id,
                         date: this.reportDate,
                         damages: [this.damageDescription]
                     };
                     // Make POST request to report car
-                    axios.post('http://localhost:5102/create_report', reportData)
+                    axios.post('http://localhost:8000/jomletsgo/reportcar', reportData)
                         .then(response => {
                             alert("Car reported successfully");
                             console.log('Reported car data:', response.data);
@@ -505,7 +455,7 @@
                 //cancel booking after report is created
                 cancelBooking(){
                     const report = {
-                        vehicle_id: this.bookedCar.Vehicle_Id,
+                        vehicle_id: this.bookedCar.vehicle_id,
                     }
                     axios.post('http://localhost:5102/cancel', report)
                         .then(response => {
