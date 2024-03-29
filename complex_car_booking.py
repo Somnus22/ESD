@@ -23,23 +23,22 @@ def car_rental():
             rental_info = request.get_json()
             print("\nReceived a rental request in JSON:", rental_info)
 
-
             result = processCarRental(rental_info)
             print('\n------------------------')
             print('\nresult: ', result)
             return jsonify(result), result["code"]
 
         except Exception as e:
-            # Unexpected error in code
+                # Unexpected error in code
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             ex_str = str(e) + " at " + str(exc_type) + ": " + fname + ": line " + str(exc_tb.tb_lineno)
             print(ex_str)
 
-            return jsonify({
-                "code": 500,
-                "message": "complex_car_booking.py internal error: " + ex_str
-            }), 500
+        return jsonify({
+            "code": 500,
+            "message": "complex_car_booking.py internal error: " + ex_str
+        }), 500
 
     # if reached here, not a JSON request.
     return jsonify({
@@ -97,8 +96,9 @@ def processCarRental(rental_info):
         }
 
 
-    print('\n\n-----Invoking Rental Log microservice-----')    
-    rental_log= invoke_http(rental_log_URL,method="POST",json= rental_info)
+    print('\n\n-----Invoking Rental Log microservice-----')
+    rental_log_info = {**rental_info, **car_inventory_update}    
+    rental_log= invoke_http(rental_log_URL,method="POST",json= rental_log_info)
     
     print("Rental Log:", rental_log, '\n')
 

@@ -12,7 +12,7 @@ from sqlalchemy import  Numeric
 app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost:3306/Cars'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost:3306/Cars'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -101,8 +101,8 @@ def get_distance_matrix(origins, destinations, api_key):
 @app.route("/cars/locationNearMe", methods=["GET"])
 def find_by_nearest_distance():
     
-    Latitude = request.args.get('lat')  
-    Longitude = request.args.get('long')
+    Latitude = request.get_json('lat')  
+    Longitude = request.get_json('long')
     # Expecting 'lat,long
     user_location = f"{Latitude},{Longitude}"
     
@@ -248,7 +248,7 @@ def book_car():
         closest_car.availability = "Booked"  # Update availability
         db.session.commit()
         
-        return jsonify({"code": 200, "message": "Car booked successfully.", "Vehicle_ID": closest_car.vehicle_id}), 200
+        return jsonify({"code": 200, "message": "Car booked successfully.", "model" : car_model, "vehicle_id": closest_car.vehicle_id}), 200
     
     return jsonify({"code": 500, "message": "Error fetching distances from Google API"}), 500
         
@@ -270,18 +270,21 @@ event.listen(Cars, 'after_update', after_car_status_change)
 @app.route("/cars/waitForAvailability", methods=["POST"])
 def wait_for_availability():
     data = request.get_json()
-    car_id = data['Vehicle_Id']
+    car_id = data['vehicle_id']
+    
 
     reservedCar = db.session.query(Cars).filter_by(
-                Vehicle_Id = car_id
+                vehicle_id = car_id
         ).first()
     
     if reservedCar.availability == "Booked":
         # No need to start a background task, the event listener will handle it
         message = "You've been added to the waiting list. We will notify you when the car becomes available."
+        return jsonify({"code":201,"message": message})
     else:
         message = "Car is available."
-    return jsonify({"message": message}), 200
+        return jsonify({"code":200,"message": message})
+    
     
 #User ends trip then change the booked to unbooked
 @app.route("/end_trip/<vehicle_id>", methods=["POST"])
