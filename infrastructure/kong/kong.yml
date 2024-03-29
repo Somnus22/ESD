@@ -1,0 +1,29 @@
+_format_version: "1.1"
+
+services:
+  - name: carsearch
+    url: http://car_search:5100/findNearestCars
+    routes:
+      - name: SEARCH
+        paths:
+          - /jomletsgo/searchcar
+        methods:
+          - POST
+  
+  - name: report
+    url: http://report_damage:5102/create_report
+    routes:
+      - name: REPORT
+        paths:
+          - /jomletsgo/reportcar
+        methods:
+          - POST
+  
+  - name: carbook
+    url: http://car_booking:5101/car_rental
+    routes:
+      - name: BOOK
+        paths:
+          - /jomletsgo/bookcar
+        methods:
+          - POST
