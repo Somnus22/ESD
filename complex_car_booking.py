@@ -15,31 +15,30 @@ user_URL = environ.get('user_URL') or "http://localhost:5001/user"
 car_inventory_URL = environ.get('car_inventory_URL') or "http://localhost:5000/cars"
 rental_log_URL = environ.get("rental_log_URL") or "http://localhost:5002/rental_log"
 
-@app.route("/car_rental", methods=['GET'])
+@app.route("/car_rental", methods=['POST'])
 def car_rental():
     # Simple check of input format and data of the request are JSON
-    
-    try:
-        rental_info = request.args.to_dict()  # Converts query parameters to dictionary
-        print("\nReceived a rental request:", rental_info)
+    if request.is_json:
+        try:
+            rental_info = request.get_json()
+            print("\nReceived a rental request in JSON:", rental_info)
 
-        # Assuming processCarRental can handle rental_info as a dictionary directly
-        result = processCarRental(rental_info)
-        print('\n------------------------')
-        print('\nresult: ', result)
-        return jsonify(result), result["code"]
+            result = processCarRental(rental_info)
+            print('\n------------------------')
+            print('\nresult: ', result)
+            return jsonify(result), result["code"]
 
-    except Exception as e:
-            # Unexpected error in code
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        ex_str = str(e) + " at " + str(exc_type) + ": " + fname + ": line " + str(exc_tb.tb_lineno)
-        print(ex_str)
+        except Exception as e:
+                # Unexpected error in code
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            ex_str = str(e) + " at " + str(exc_type) + ": " + fname + ": line " + str(exc_tb.tb_lineno)
+            print(ex_str)
 
-    return jsonify({
-        "code": 500,
-        "message": "complex_car_booking.py internal error: " + ex_str
-    }), 500
+        return jsonify({
+            "code": 500,
+            "message": "complex_car_booking.py internal error: " + ex_str
+        }), 500
 
     # if reached here, not a JSON request.
     return jsonify({

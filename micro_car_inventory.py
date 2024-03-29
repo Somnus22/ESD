@@ -270,9 +270,8 @@ event.listen(Cars, 'after_update', after_car_status_change)
 @app.route("/cars/waitForAvailability", methods=["POST"])
 def wait_for_availability():
     data = request.get_json()
-    print(data)
     car_id = data['vehicle_id']
-    print(car_id)
+    
 
     reservedCar = db.session.query(Cars).filter_by(
                 vehicle_id = car_id
