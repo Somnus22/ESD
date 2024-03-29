@@ -27,7 +27,7 @@ def send_simple_message(vehicle_id):
     for user in arr_of_users:
         print('\n-----Invoking User microservice-----')
         get_user_details = invoke_http(user_URL + "/" + str(user))
-        print('Car Wait For Availability Result:', get_user_details)
+        print('User Details:', get_user_details)
     
 
         # Check the order result; if a failure, send it to the error microservice.
@@ -39,10 +39,14 @@ def send_simple_message(vehicle_id):
         # Inform the error microservice
         #print('\n\n-----Invoking error microservice as order fails-----')
             print('\n\n-----Publishing the error message with for User Microservice-----')
-            return {
+            print({
             "code": 500,
             "data": {"Get User Details": get_user_details},
-            "message": "Error in Getting User Details"}
+            "message": "Error in Getting User Details"})
+            # return {
+            # "code": 500,
+            # "data": {"Get User Details": get_user_details},
+            # "message": "Error in Getting User Details"}
             
 
        
@@ -113,7 +117,7 @@ def send_notification():
         message = data.get('message')
 
         if not all([vehicle_id, user_id, message]):
-            return jsonify({"error": "Missing required fields"}), 400
+            return {"code":400,"error": "Missing required fields"}
 
         notification_data = {
             'vehicle_id': vehicle_id,
@@ -132,8 +136,7 @@ def send_notification():
 
  
     if code not in range(200, 300):
-        # Inform the error microservice
-        #print('\n\n-----Invoking error microservice as order fails-----')
+
         print('\n\n-----Publishing the error message with for Car Inventory Microservice-----')
 
        
@@ -141,7 +144,7 @@ def send_notification():
         # 7. Return error
         return {
             "code": 500,
-            "data": {"Wait for Car Availability Updatee": car_wait_for_availability},
+            "data": {"Wait for Car Availability Update": car_wait_for_availability},
             "message": "User not placed on waiting list"
         }
     
@@ -149,13 +152,24 @@ def send_notification():
         car_dict[vehicle_id].append(user_id)
     else:
         car_dict[vehicle_id] = [user_id]
-    return {
-        "code": 201,
-        "data": {
-            "Wait for Car Availability Update": car_wait_for_availability,
-        },
-        'message' : f'User {user_id} placed on waiting list for car {vehicle_id}'
-    }
+    if code == 200:
+
+        return {
+            "code": code,
+            "data": {
+                "Wait for Car Availability Update": car_wait_for_availability,
+            },
+            "message": "Car is already available"
+        }
+    elif code == 201:
+        return {
+            "code": code,
+            "data": {
+                "Wait for Car Availability Update": car_wait_for_availability,
+            },
+            "message": f"User {user_id} has been placed on waiting list for car {vehicle_id}"
+        }
+
 
 def run_flask_app():
     print("This is flask " + os.path.basename(__file__) + " for sending notifications...")
