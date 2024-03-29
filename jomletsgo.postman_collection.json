@@ -1,0 +1,109 @@
+{
+	"info": {
+		"_postman_id": "31ea4233-3b88-4c56-9487-297eb3ce2c6f",
+		"name": "jomletsgo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "29822343"
+	},
+	"item": [
+		{
+			"name": "localhost: find nearests cars",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"lat\":\"1.4506692269865293\",\r\n    \"long\":\"103.82049251534431\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:5100/findNearestCars"
+			},
+			"response": []
+		},
+		{
+			"name": "localhost: car rental",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:5101/car_rental"
+			},
+			"response": []
+		},
+		{
+			"name": "localhost: create report",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": "http://localhost:5102/create_report"
+			},
+			"response": []
+		},
+		{
+			"name": "kong: find nearest cars",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"lat\":\"1.4506692269865293\",\r\n    \"long\":\"103.82049251534431\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8000/jomletsgo/search"
+			},
+			"response": []
+		},
+		{
+			"name": "kong: create damage report",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_id\": \"1\",\r\n    \"vehicle_id\": \"1\",\r\n    \"damages\":{\r\n        \"1\":\"a\",\r\n        \"2\":\"b\",\r\n        \"3\":\"c\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8000/jomletsgo/report"
+			},
+			"response": []
+		},
+		{
+			"name": "kong: book a car",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_id\": \"1\",\r\n    \"lat\": \"1.4506692269865293\",\r\n    \"long\": \"103.82049251534431\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8000/jomletsgo/bookcar"
+			},
+			"response": []
+		}
+	]
+}
