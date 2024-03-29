@@ -96,8 +96,9 @@ def processCarRental(rental_info):
         }
 
 
-    print('\n\n-----Invoking Rental Log microservice-----')    
-    rental_log= invoke_http(rental_log_URL,method="POST",json= rental_info)
+    print('\n\n-----Invoking Rental Log microservice-----')
+    rental_log_info = {**rental_info, **car_inventory_update}    
+    rental_log= invoke_http(rental_log_URL,method="POST",json= rental_log_info)
     
     print("Rental Log:", rental_log, '\n')
 

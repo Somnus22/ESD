@@ -60,6 +60,7 @@ services:
     networks:
       - jomletsgo
     environment:
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
       KONG_DATABASE: postgres
       KONG_PG_HOST: kong-database
       KONG_PG_USER: kong
@@ -83,6 +84,10 @@ services:
       - "8446:8446" # Dev Portal. Listens for HTTP traffic, assuming Dev Portal is enabled.
       - "8004:8004" # Dev Portal /files traffic over HTTPS, assuming the Dev Portal is enabled.
       - "8447:8447" # Dev Portal /files traffic over HTTPS, assuming the Dev Portal is enabled.
+    volumes:
+      - ./infrastructure/kong/kong.yml:/etc/kong/kong.yml
+    command: > 
+      /bin/sh -c "kong config db_import /etc/kong/kong.yml && kong start"
   ####################################
   # RabbitMQ: The messaging broker   
   ####################################
@@ -191,9 +196,9 @@ services:
     networks:
       - jomletsgo    
     depends_on:
+      - rabbitmq
       - car_inventory
       - users
-      - rabbitmq
     environment:
       rabbit_host: rabbitmq
       rabbit_port: 5672
