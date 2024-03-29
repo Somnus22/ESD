@@ -14,7 +14,10 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-
+    volumes: 
+      - ./rabbitmq.config:/etc/rabbitmq/rabbitmq.config
+      - ./rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json
+      - rabbitmq_data:/var/lib/rabbitmq
 
   ###################################
   # Car_inventory
@@ -28,7 +31,7 @@ services:
     environment:
       rabbit_host: rabbitmq
       rabbit_port: 5672
-      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/Cars
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/Cars
     # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/Cars
 
       PYTHONUNBUFFERED: 1
@@ -44,7 +47,7 @@ services:
     image: rental:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/rental_log
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/rental_log
     # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/rental_log
 
       PYTHONUNBUFFERED: 1
@@ -61,7 +64,7 @@ services:
     restart: always
     environment:
 
-      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/report
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/report
     # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/report
 
       PYTHONUNBUFFERED: 1
@@ -77,7 +80,7 @@ services:
     image: users:project
     restart: always
     environment:
-      dbURL: mysql+mysqlconnector://root:root@host.docker.internal:3306/users
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/users
     # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/users
 
       PYTHONUNBUFFERED: 1
