@@ -241,7 +241,7 @@ def book_car():
         closest_car.availability = "Booked"  # Update availability
         db.session.commit()
         
-        return jsonify({"code": 200, "message": "Car of the model that you want is booked successfully.", "Model" : car_model, "Vehicle_ID": closest_car.vehicle_id}), 200
+        return jsonify({"code": 200, "message": "Car of the model that you want is booked successfully.", "Model" : car_model, "vehicle_id": closest_car.vehicle_id}), 200
 
 
         
