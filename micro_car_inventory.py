@@ -101,8 +101,8 @@ def get_distance_matrix(origins, destinations, api_key):
 @app.route("/cars/locationNearMe", methods=["GET"])
 def find_by_nearest_distance():
     
-    Latitude = request.args.get('lat')  
-    Longitude = request.args.get('long')
+    Latitude = request.get_json('lat')  
+    Longitude = request.get_json('long')
     # Expecting 'lat,long
     user_location = f"{Latitude},{Longitude}"
     

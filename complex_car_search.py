@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from invokes import invoke_http
 from flask_cors import CORS
 from os import environ
+import requests
 import os
 app = Flask(__name__)
 CORS(app)
@@ -35,6 +36,6 @@ def get_all():
 if __name__ == '__main__':
     print("This is flask " + os.path.basename(__file__) +
         " to search for cars")
-    app.run(port=5100, debug=True)
+    app.run(host="0.0.0.0",port=5100, debug=True)
 
 

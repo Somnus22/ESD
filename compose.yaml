@@ -1,9 +1,88 @@
 version: "3.8"
 
+name: jomletsgo
+
 volumes:
+  pgdata:
   rabbitmq_data:
 
+networks:
+  jomletsgo:
+    driver: bridge
+    name: jomletsgo-Kong
+
 services:
+  kong-database:
+    image: postgres:15 # tested 20231101; Ref: https://docs.konghq.com/gateway/latest/support/third-party/
+    platform: linux/amd64  # <- required for Mac M1 chip. Otherwise, can remove
+    restart: always
+    networks:
+      - jomletsgo
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "kong"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  #######################################
+  # Kong database migration
+  #######################################
+  kong-migration:
+    image: kong/kong-gateway:3.2.2.5 # tested 20231101
+    platform: linux/amd64  # <- required for Mac M1 chip. Otherwise, can remove
+    command: "kong migrations bootstrap"
+    restart: on-failure
+    networks:
+      - jomletsgo
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: password
+    depends_on:
+      - kong-database
+
+  #######################################
+  # Kong: The API Gateway
+  #######################################
+  kong:
+    image: kong/kong-gateway:3.2.2.5 # tested 20231101
+    platform: linux/amd64  # <- required for Mac M1 chip. Otherwise, can remove
+    restart: always
+    networks:
+      - jomletsgo
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: password
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+    depends_on:
+      - kong-migration
+    ports: # https://docs.konghq.com/gateway/latest/production/networking/default-ports/
+      - "8000:8000" # Takes incoming HTTP traffic from Consumers, and forwards it to upstream Services.
+      - "8443:8443" # Takes incoming HTTPS traffic from Consumers, and forwards it to upstream Services.
+      - "8001:8001" # Admin API. Listens for calls from the command line over HTTP.
+      - "8444:8444" # Admin API. Listens for calls from the command line over HTTPS.
+      - "8002:8002" # Kong Manager (GUI). Listens for HTTP traffic.
+      - "8445:8445" # Kong Manager (GUI). Listens for HTTPS traffic.
+      - "8003:8003" # Dev Portal. Listens for HTTP traffic, assuming Dev Portal is enabled.
+      - "8446:8446" # Dev Portal. Listens for HTTP traffic, assuming Dev Portal is enabled.
+      - "8004:8004" # Dev Portal /files traffic over HTTPS, assuming the Dev Portal is enabled.
+      - "8447:8447" # Dev Portal /files traffic over HTTPS, assuming the Dev Portal is enabled.
   ####################################
   # RabbitMQ: The messaging broker   
   ####################################
@@ -11,6 +90,8 @@ services:
     image: rabbitmq:3-management
     hostname: esd-rabbit
     restart: always
+    networks:
+      - jomletsgo
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -18,7 +99,7 @@ services:
       - ./rabbitmq.config:/etc/rabbitmq/rabbitmq.config
       - ./rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json
       - rabbitmq_data:/var/lib/rabbitmq
-
+  
   ###################################
   # Car_inventory
   ###################################
@@ -27,7 +108,10 @@ services:
       context: ./
       dockerfile: car.dockerfile
     image: car:project
+    container_name: car_inventory
     restart: always
+    networks:
+      - jomletsgo
     environment:
       rabbit_host: rabbitmq
       rabbit_port: 5672
@@ -45,7 +129,10 @@ services:
       context: ./
       dockerfile: rental_log.dockerfile
     image: rental:project
+    container_name: rental_log
     restart: always
+    networks:
+      - jomletsgo    
     environment:
       dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/rental_log
     # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/rental_log
@@ -61,7 +148,10 @@ services:
       context: ./
       dockerfile: report.dockerfile
     image: report:project
+    container_name: report
     restart: always
+    networks:
+      - jomletsgo    
     environment:
 
       dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/report
@@ -78,7 +168,10 @@ services:
       context: ./
       dockerfile: users.dockerfile
     image: users:project
+    container_name: users
     restart: always
+    networks:
+      - jomletsgo    
     environment:
       dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/users
     # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/users
@@ -93,7 +186,10 @@ services:
       context: ./
       dockerfile: notifications.dockerfile
     image: notifications:project
+    container_name: notifications
     restart: always
+    networks:
+      - jomletsgo    
     depends_on:
       - car_inventory
       - users
@@ -113,7 +209,10 @@ services:
       context: ./
       dockerfile: car_search.dockerfile
     image: car_search:project
+    container_name: car_search
     restart: always
+    networks:
+      - jomletsgo    
     depends_on:
       - car_inventory
     environment:
@@ -132,7 +231,10 @@ services:
       context: ./
       dockerfile: car_booking.dockerfile
     image: car_booking:project
+    container_name: car_booking
     restart: always
+    networks:
+      - jomletsgo    
     depends_on:
       - users
       - car_inventory
@@ -153,7 +255,10 @@ services:
       context: ./
       dockerfile: report_damage.dockerfile
     image: report_damage:project
+    container_name: report_damage
     restart: always
+    networks:
+      - jomletsgo    
     depends_on:
       - report
       - car_inventory
