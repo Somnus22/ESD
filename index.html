@@ -57,22 +57,8 @@
                         <li><button class="dropdown-item" type="button" @click="applySort('distance', 'ascending')">Closest</button></li>
                         <li><button class="dropdown-item" type="button" @click="applySort('distance', 'descending')">Furthest</button></li>
                     </ul>
-            </div>
-            <hr>
-            <div class="ps-3 pt-1 mb-4" v-if="carsList && !selectedCar">
-                <div class="mb-3">
-                    <h5 class="d-inline">Cars Found:</h5>
-                    <button class="btn btn-sm btn-secondary ms-3" @click="showFilter">Filter</button>
-                    <button class="btn btn-primary dropdown-toggle btn-sm float-end me-5" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Sort by
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><button class="dropdown-item" type="button" @click="applySort('price', 'ascending')">Price ascending</button></li>
-                        <li><button class="dropdown-item" type="button" @click="applySort('price', 'descending')">Price descending</button></li>
-                        <li><button class="dropdown-item" type="button" @click="applySort('distance', 'ascending')">Closest</button></li>
-                        <li><button class="dropdown-item" type="button" @click="applySort('distance', 'descending')">Furthest</button></li>
-                    </ul>
                 </div>
+                <hr>
                 <div v-if="filter" class="mb-3">
                     <div class="dropdown">
                         <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
