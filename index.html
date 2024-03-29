@@ -24,131 +24,150 @@
               <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                   <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="#">Car Search</a>
+                    <button type="button" class="nav-link active" @click="page='carSearch';selectedCar=null">Car Search</button>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link active" href="#">Report</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link active" href="#">Booking details</a>
+                    <button type="button" class="nav-link active" @click="page='bookingDetails'">Booking Details</button>
                   </li>
               </div>
             </div>
           </nav>
-        <div class="ps-3 pt-3">
-            <button class="btn btn-primary" @click="searchForNearestCar">Search for car</button> <!--v-if="!carsList"-->
-        </div>
-        <hr>
-        <div class="ps-3 pt-1 mb-4" v-if="carsList && !selectedCar">
-            <div class="mb-3">
-                <h5 class="d-inline">Cars Found:</h5>
-                <button class="btn btn-sm btn-secondary ms-3" @click="showFilter">Filter</button>
-                <button class="btn btn-primary dropdown-toggle btn-sm float-end me-5" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Sort by
-                </button>
-                <ul class="dropdown-menu">
-                    <li><button class="dropdown-item" type="button" @click="applySort('price', 'ascending')">Price ascending</button></li>
-                    <li><button class="dropdown-item" type="button" @click="applySort('price', 'descending')">Price descending</button></li>
-                    <li><button class="dropdown-item" type="button" @click="applySort('distance', 'ascending')">Closest</button></li>
-                    <li><button class="dropdown-item" type="button" @click="applySort('distance', 'descending')">Furthest</button></li>
-                </ul>
+        <div v-if="page == 'carSearch'">
+            <div class="ps-3 pt-3">
+                <button class="btn btn-primary" @click="searchForNearestCar">Search for car</button> <!--v-if="!carsList"-->
             </div>
-            <div v-if="filter" class="mb-3">
-                <div class="dropdown">
-                    <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                      Brand
+            <hr>
+            <div class="ps-3 pt-1 mb-4" v-if="carsList && !selectedCar">
+                <div class="mb-3">
+                    <h5 class="d-inline">Cars Found:</h5>
+                    <button class="btn btn-sm btn-secondary ms-3" @click="showFilter">Filter</button>
+                    <button class="btn btn-primary dropdown-toggle btn-sm float-end me-5" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Sort by
                     </button>
                     <ul class="dropdown-menu">
-                        <li v-for="option in brandOptions">
-                            <button type="button" class="dropdown-item" @click="applyFilter('brand',option)">{{option}} <span v-if="selectedBrand == option" class="float-end"><svg style="color:green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
-                                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
-                              </svg></span></button>
-                        </li>
+                        <li><button class="dropdown-item" type="button" @click="applySort('price', 'ascending')">Price ascending</button></li>
+                        <li><button class="dropdown-item" type="button" @click="applySort('price', 'descending')">Price descending</button></li>
+                        <li><button class="dropdown-item" type="button" @click="applySort('distance', 'ascending')">Closest</button></li>
+                        <li><button class="dropdown-item" type="button" @click="applySort('distance', 'descending')">Furthest</button></li>
                     </ul>
-                    <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Type
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li v-for="option in typeOptions">
-                            <button type="button" class="dropdown-item" @click="applyFilter('type',option)">{{option}} <span v-if="selectedType == option" class="float-end"><svg style="color:green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
-                                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
-                              </svg></span></button>
-                        </li>
-                    </ul>
-                    <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Available?
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li v-for="option in statusOptions">
-                            <button type="button" class="dropdown-item" @click="applyFilter('status',option)">{{option}} <span v-if="selectedStatus == option" class="float-end"><svg style="color:green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
-                                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
-                              </svg></span></button>
-                        </li>
-                    </ul>
-                    <button class="btn btn-secondary mb-3"  style="--bs-btn-padding-y: .2rem; --bs-btn-padding-x: .4rem; --bs-btn-font-size: .6rem;" @click="clearFilters" type="button">
-                        Clear filter and sort
-                    </button>
+                </div>
+                <div v-if="filter" class="mb-3">
+                    <div class="dropdown">
+                        <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          Brand
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li v-for="option in brandOptions">
+                                <button type="button" class="dropdown-item" @click="applyFilter('brand',option)">{{option}} <span v-if="selectedBrand == option" class="float-end"><svg style="color:green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                    <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                                  </svg></span></button>
+                            </li>
+                        </ul>
+                        <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Type
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li v-for="option in typeOptions">
+                                <button type="button" class="dropdown-item" @click="applyFilter('type',option)">{{option}} <span v-if="selectedType == option" class="float-end"><svg style="color:green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                    <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                                  </svg></span></button>
+                            </li>
+                        </ul>
+                        <button class="btn btn-warning dropdown-toggle btn-sm mb-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Available?
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li v-for="option in statusOptions">
+                                <button type="button" class="dropdown-item" @click="applyFilter('status',option)">{{option}} <span v-if="selectedStatus == option" class="float-end"><svg style="color:green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                    <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                                  </svg></span></button>
+                            </li>
+                        </ul>
+                        <button class="btn btn-secondary mb-3"  style="--bs-btn-padding-y: .2rem; --bs-btn-padding-x: .4rem; --bs-btn-font-size: .6rem;" @click="clearFilters" type="button">
+                            Clear filter and sort
+                        </button>
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Brand</th>
+                            <th>Type</th>
+                            <th>Available?</th>
+                            <th>Price per hour</th>
+                            <th>Latitude</th> <!-- Placeholder-->
+                            <th>Longitude</th> <!-- Placeholder -->
+                            <!-- <th>Distance</th> -->
+                            <th>Select Car</th> <!-- Placeholder -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="car in filteredData" :key="car.Vehicle_Id">
+                            <td>{{ car.Brand }}</td>
+                            <td>{{ car.Type }}</td>
+                            <td>{{ car.Availability }}</td>
+                            <td>{{ car.Per_Hr_Price }}</td>
+                            <td>{{ car.Latitude }}</td>
+                            <td>{{ car.Longitude }}</td>
+                            <td><button class="btn btn-success" @click="selectedCar = car">Select</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div v-else-if="noCars">
+            
+            </div>
+            <div v-if="selectedCar && bookedCar == null" class="ps-3 pt-1">
+                <h5>You have selected the following car:</h5>
+                <p>Brand: {{selectedCar.Brand}}</p>
+                <p>Type: {{selectedCar.Type}}</p>
+                <p>Price per hour: {{selectedCar.Per_Hr_Price}}</p>
+                <p>Latitude: {{selectedCar.Latitude}}</p> <!-- Placeholder-->
+                <p>Longitude: {{selectedCar.Longitude}}</p> <!-- Placeholder -->
+                <!-- <p>Distance: {{selectedCar.Distance}}</p> -->
+                <h6 v-if="selectedCar.Availability == 'Booked'"> The car is <span class="text-danger">currently booked.</span> Would you like to receive an email when it becomes available?</h6>
+                <button class="btn btn-primary mt-3" v-if="selectedCar.Availability == 'Booked'" @click="requestNotification">Notify me when the car is available</button> <!-- havent put in vue methods -->
+                <button class="btn btn-primary mt-2" v-else @click="bookCar">Book car</button>
+            </div>
+            <div v-else-if="bookedCar != null" class="ps-3 pt-1 mb-4">
+                Booking successful! You may view your booking details later under the Booking Details page.
+            </div>
+        </div>
+        <div v-else>
+            <div class="ms-3 mt-4">
+                <h5>Your booking details are as follows: </h5>
+                <p>Car Brand: {{bookedCar.Brand}}</p>
+                <p>Car Type: {{bookedCar.Type}}</p>
+                <p>Car price per hour: {{bookedCar.Per_Hr_Price}}</p>
+                <p>Car Latitude: {{bookedCar.Latitude}}</p> <!-- Placeholder-->
+                <p>Car Longitude: {{bookedCar.Longitude}}</p> <!-- Placeholder -->
+                <p>Booking Date and Time: {{bookedCar.date}}</p> <!-- Placeholder -->
+            </div>
+            <div v-if="reportStarted == false">
+                <h5 class="ms-3 pt-4">Have any issues with the car?</h5>
+                <button class="btn btn-primary ms-3" @click="reportStarted=true">Create damage report</button>
+            </div>
+            <!--If car selected and booked for report-->
+            <div v-if="bookedCar === null">
+                <div class="ps-3 pt-3">
+                    <h5>No booking found</h5>
                 </div>
             </div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Brand</th>
-                        <th>Type</th>
-                        <th>Available?</th>
-                        <th>Price per hour</th>
-                        <th>Latitude</th> <!-- Placeholder-->
-                        <th>Longitude</th> <!-- Placeholder -->
-                        <!-- <th>Distance</th> -->
-                        <th>Book Car</th> <!-- Placeholder -->
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="car in filteredData" :key="car.Vehicle_Id">
-                        <td>{{ car.Brand }}</td>
-                        <td>{{ car.Type }}</td>
-                        <td>{{ car.Availability }}</td>
-                        <td>{{ car.Per_Hr_Price }}</td>
-                        <td>{{ car.Latitude }}</td>
-                        <td>{{ car.Longitude }}</td>
-                        <td><button class="btn btn-success" @click="selectedCar = car; bookedCar = car">Select</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div v-else-if="noCars">
-            
-        </div>
-        <div v-if="selectedCar" class="ps-3 pt-1 mb-4">
-            <h5>You have selected the following car:</h5>
-            <p>Brand: {{selectedCar.Brand}}</p>
-            <p>Type: {{selectedCar.Type}}</p>
-            <p>Price per hour: {{selectedCar.Per_Hr_Price}}</p>
-            <p>Latitude: {{selectedCar.Latitude}}</p> <!-- Placeholder-->
-            <p>Longitude: {{selectedCar.Longitude}}</p> <!-- Placeholder -->
-            <!-- <p>Distance: {{selectedCar.Distance}}</p> -->
-            <h6 v-if="selectedCar.Availability == 'Booked'"> The car is <span class="text-danger">currently booked.</span> Would you like to receive an email when it becomes available?</h6>
-            <button class="btn btn-primary mt-3" v-if="selectedCar.Availability == 'Booked'" @click="requestNotification">Notify me when the car is available</button> <!-- havent put in vue methods -->
-            <button class="btn btn-primary mt-2" v-else @click="bookCar">Book car</button>
-        </div>
-        <!--If car selected and booked for report-->
-        <div v-if="selectedCar && bookedCar != null && reportMade == false" style="padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-            <h2 style="margin-bottom: 15px;">Report</h2>
-            <div style="margin-bottom: 15px;">
-                <label for="reportDate" style="display: block; margin-bottom: 5px;">Date:</label>
-                <input type="date" id="reportDate" v-model="reportDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+            <div v-else-if="reportMade == false && reportStarted == true" style="padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                <h2 class="mb-4">Report</h2>
+                <div class="mb-4">
+                    <label for="damageDescription" style="display: block; margin-bottom: 5px;">Damage <span v-if="damages.length > 1"> {{1}}</span> Description:</label>
+                    <textarea id="damageDescription" v-model="damageDescription" style="width: 30%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; resize: vertical;"></textarea>
+                </div>
+                Have more than one damage?  <button class="btn btn-secondary ms-3" @click="reportCar">Add row</button>
+                <button class="btn btn-primary ms-3" @click="reportCar">Submit report</button>
             </div>
-            <div style="margin-bottom: 15px;">
-                <label for="damageDescription" style="display: block; margin-bottom: 5px;">Damage Description:</label>
-                <textarea id="damageDescription" v-model="damageDescription" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; resize: vertical;"></textarea>
-            </div>
-            <button @click="reportCar" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Report Car</button>
-        </div>
-        <div v-if="reportMade == true" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: 20px;">
-            <h2 style="margin-bottom: 15px;">Report</h2>
-            <div>Report sent! Would you like to cancel your booking?</div>
+            <div v-else-if="reportMade == true" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+                <h2 class="mb-4">Report</h2>
+                <div>Report sent! Would you like to cancel your booking?</div>
 
-            <button @click="cancelBooking" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Cancel Booking</button>
+                <button @click="cancelBooking" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Cancel Booking</button>
+            </div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
@@ -172,10 +191,12 @@
                 bookedCar: null,
                 reportDate: '',
                 damageDescription: '',
+                reportStarted: false,
                 reportMade: false,
                 selectedBrand: "",
                 selectedType: "",
-                selectedStatus: ""
+                selectedStatus: "",
+                page: 'carSearch'
             },
             computed: {
                 filteredData() {
@@ -250,7 +271,6 @@
                                     console.log("Location sent successfully");
                                 }
                             };
-                            console.log(position)
                             xhr.send(JSON.stringify({
                                 "lat": position.coords.latitude,
                                 "long": position.coords.longitude
@@ -269,18 +289,22 @@
                 },
                 bookCar(){
                     var xhr = new XMLHttpRequest();
+                    this.bookedCar = this.selectedCar; //TEMP
+                    this.bookedCar['date'] = new Date().toLocaleString();
                     xhr.open("POST", "http://localhost:5101/car_rental");
                     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                     xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState === 4 && xhr.status === 200) {
                             console.log("Booking successful");
+                            this.bookedCar = this.selectedCar
+                            this.selectedCar = null 
                         }
                     };
                     xhr.send(JSON.stringify({
                         "user_id": this.userId,
                         "car_id": this.selectedCar.Vehicle_Id 
-                    }));
+                    }))
                 },
                 clearFilters() {
                     this.selectedType = '';
