@@ -248,7 +248,7 @@ def book_car():
         closest_car.availability = "Booked"  # Update availability
         db.session.commit()
         
-        return jsonify({"code": 200, "message": "Car booked successfully.", "vehicle_id": closest_car.vehicle_id}), 200
+        return jsonify({"code": 200, "message": "Car booked successfully.", "model" : car_model, "vehicle_id": closest_car.vehicle_id}), 200
     
     return jsonify({"code": 500, "message": "Error fetching distances from Google API"}), 500
         
