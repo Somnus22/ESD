@@ -12,7 +12,7 @@ from sqlalchemy import  Numeric
 app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost:3306/Cars'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:root@localhost:8889/Cars'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -206,6 +206,45 @@ def book_car():
     query_filter = Cars.query.filter_by(availability="Unbooked")
     if car_model:
         query_filter = query_filter.filter_by(model=car_model)
+        all_cars = query_filter.all()
+        destinations = [f"{car.latitude},{car.longitude}" for car in all_cars]
+        distances_response = get_distance_matrix([user_location], destinations, "AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ")
+        elements = distances_response['rows'][0]['elements']
+
+    # Lists to hold your data
+        distance_values = []
+        distance_texts = []
+
+    # Iterate over each element
+        for elem in elements:
+            # Check if the status is OK to safely access 'distance' and 'duration'
+            if elem['status'] == 'OK':
+                # Now we're sure 'distance' exists, we can safely access it
+                distance_values.append(elem['distance']['value'])
+                distance_texts.append(elem['distance']['text'])
+            else:
+                # For elements with ZERO_RESULTS or any status other than OK,
+                # append None or a placeholder to indicate the data isn't available
+                distance_values.append(None)  # or a large value like float('inf')
+                distance_texts.append("Not Available")
+    
+        # Assign a large value to 'None' entries to ensure they are not selected as the minimum
+        distance_values_with_default = [value if value is not None else float('inf') for value in distance_values]
+
+        # Now find the index of the minimum value in this new list
+        closest_car_index = distance_values_with_default.index(min(distance_values_with_default))
+
+        # Continue as before
+        closest_car = all_cars[closest_car_index]
+    
+        
+        closest_car.availability = "Booked"  # Update availability
+        db.session.commit()
+        
+        return jsonify({"code": 200, "message": "Car of the model that you want is booked successfully.", "Model" : car_model, "Vehicle_ID": closest_car.vehicle_id}), 200
+
+
+        
     
     all_cars = query_filter.all()
     
@@ -249,6 +288,8 @@ def book_car():
         db.session.commit()
         
         return jsonify({"code": 200, "message": "Car booked successfully.", "Model" : car_model, "Vehicle_ID": closest_car.vehicle_id}), 200
+
+        
     
     return jsonify({"code": 500, "message": "Error fetching distances from Google API"}), 500
         
