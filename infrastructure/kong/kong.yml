@@ -9,6 +9,9 @@ services:
           - /jomletsgo/searchcar
         methods:
           - POST
+          - PUT
+          - GET
+          - OPTIONS
   
   - name: report
     url: http://report_damage:5102/create_report
@@ -18,6 +21,9 @@ services:
           - /jomletsgo/reportcar
         methods:
           - POST
+          - PUT
+          - GET
+          - OPTIONS
   
   - name: carbook
     url: http://car_booking:5101/car_rental
@@ -27,3 +33,6 @@ services:
           - /jomletsgo/bookcar
         methods:
           - POST
+          - PUT
+          - GET
+          - OPTIONS
