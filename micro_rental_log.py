@@ -55,7 +55,7 @@ def createRentalLog():
 #update rental log as cancelled      
 @app.route("/rental_log/cancel", methods=['PUT'])
 def update_log_entry():
-    report = request.json.get_json()
+    report = request.get_json()
     vehicle_id = report['vehicle_id']
     try:
         rental_log = db.session.scalars(

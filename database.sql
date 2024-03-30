@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `Users` (
 
 INSERT INTO Users (user_id, name, phone_number, email_address) VALUES
 (1, 'Brad Goh', '+65 9123 4567', 'changethewoah@example.com'),
-(2, 'Elliot Tan', '+65 9876 5432', 'Elliot@example.com'),
+(2, 'Elliot Tan', '+65 9876 5432', 'elliot990@live.com'),
 (3, 'Teo Yong Ray', '+65 8765 4321', 'YongRay@example.com'),
 (4, 'William Tan', '+65 7654 3210', 'Weel@example.com'),
 (5, 'Jerome Lee', '+65 6543 2109', 'JeromeLee@example.com'),

@@ -380,7 +380,7 @@
                     }
                 },
                 extractOptions() {
-                    this.cartypeOptions = [...new Set(this.carsList.map(car => car.cartype))];
+                    this.typeOptions = [...new Set(this.carsList.map(car => car.cartype))];
                     this.statusOptions = [...new Set(this.carsList.map(car => car.availability))];
                     this.brandOptions = [...new Set(this.carsList.map(car => car.brand))];
                 },
@@ -418,7 +418,7 @@
                 },
                 requestNotification(){
                     var xhr = new XMLHttpRequest();
-                    xhr.open("POST", "http://localhost:5004/send_notification");
+                    xhr.open("POST", "http://localhost:8000/jomletsgo/sendnotification");
                     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                     xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
                     xhr.onreadystatechange = function () {
@@ -428,7 +428,7 @@
                     };
                     xhr.send(JSON.stringify({
                         "user_id": this.userId,
-                        "car_id": this.selectedCar.vehicle_id 
+                        "vehicle_id": this.selectedCar.vehicle_id 
                     }));
                 },
                 reportCar() {
@@ -468,7 +468,7 @@
                     }
                     var xhr = new XMLHttpRequest();
                     var ref = this
-                    xhr.open("POST", "http://localhost:8000/jomletsgo/reportcar");
+                    xhr.open("POST", "http://localhost:8000/jomletsgo/cancelcar");
                     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                     xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
                     xhr.onreadystatechange = function () {

@@ -99,8 +99,6 @@ def callback(channel, method, properties, body): # required signature for the ca
 
 def processNotifications(notifications):
     print("Notifications: Recording notifications:")
-    # url = f"http://localhost:5000/order?user_id={user_id}"
-    # user_data = invoke_http(url)
     print(notifications)
     message_dict = json.loads(notifications)
     car_id = message_dict.get('car_id')
@@ -111,18 +109,16 @@ def processNotifications(notifications):
 @app.route('/send_notification', methods=['POST'])
 def send_notification():
     if request.method == 'POST':
-        data = request.json
-        vehicle_id = data.get('vehicle_id')
-        user_id = data.get('user_id')
-        message = data.get('message')
+        data = request.get_json()
+        vehicle_id = data['vehicle_id']
+        user_id = data['user_id']
 
-        if not all([vehicle_id, user_id, message]):
+        if not all([vehicle_id, user_id]):
             return {"code":400,"error": "Missing required fields"}
 
         notification_data = {
             'vehicle_id': vehicle_id,
             'user_id': user_id,
-            'message': message
         }
 
     print('\n-----Invoking Car Inventory microservice-----')
@@ -154,21 +150,21 @@ def send_notification():
         car_dict[vehicle_id] = [user_id]
     if code == 200:
 
-        return {
+        return jsonify({
             "code": code,
             "data": {
                 "Wait for Car Availability Update": car_wait_for_availability,
             },
             "message": "Car is already available"
-        }
+        })
     elif code == 201:
-        return {
+        return jsonify({
             "code": code,
             "data": {
                 "Wait for Car Availability Update": car_wait_for_availability,
             },
             "message": f"User {user_id} has been placed on waiting list for car {vehicle_id}"
-        }
+        })
 
 
 def run_flask_app():

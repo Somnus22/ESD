@@ -94,7 +94,6 @@ def get_distance_matrix(origins, destinations, api_key):
         'key': api_key
     }
     response = requests.get(distance_matrix_url, params=payload)
-    print(response.json())
     return response.json()
 
 
@@ -198,7 +197,6 @@ event.listen(Cars, 'after_update', after_car_status_change)
 def wait_for_availability():
     data = request.get_json()
     car_id = data['vehicle_id']
-    
 
     reservedCar = db.session.query(Cars).filter_by(
                 vehicle_id = car_id
@@ -213,46 +211,6 @@ def wait_for_availability():
         return jsonify({"code":200,"message": message})
     
     
-#User ends trip then change the booked to unbooked
-@app.route("/end_trip/<vehicle_id>", methods=["POST"])
-def end_trip(vehicle_id):
-    # Here you would update the car's status to 'Unbooked' in your database
-
-    try:
-        reservedCar = db.session.query(Cars).filter_by(vehicle_id=vehicle_id).first()
-        if reservedCar:
-            reservedCar.availability = "Unbooked"
-            db.session.commit()
-            
-            # Now, check if any user is waiting for this car to become available
-            # This could be a function that checks a waiting list and notifies the user(s)
-            
-            return jsonify({"message": "Trip ended and car is now available."}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
-@app.route('/endtrip')
-def endtripweb():
-    return render_template('endtrip.html')
-
-@app.route('/get_car_locations')
-def get_car_locations():
-    # Connect to your database
-    cars = db.session.query(Cars).all()
-    
-    # Replace 'cars' with your actual table name and adjust column names accordingly
-
-    
-    # Convert to a list of dicts to jsonify
-    locations_dict = [{"latitude": car.latitude, "longitude": car.longitude} for car in cars]
-    
-
-    
-    return jsonify(locations_dict)
-
-@app.route('/carLocations')
-def carLocation():
-    return render_template('googleMaps.html')
 
 def send_message_to_queue(message):
     try:
