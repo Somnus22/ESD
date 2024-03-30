@@ -94,6 +94,7 @@ def get_distance_matrix(origins, destinations, api_key):
         'key': api_key
     }
     response = requests.get(distance_matrix_url, params=payload)
+    print(response.json())
     return response.json()
 
 
@@ -101,35 +102,26 @@ def get_distance_matrix(origins, destinations, api_key):
 @app.route("/cars/locationNearMe", methods=["GET"])
 def find_by_nearest_distance():
     
-    Latitude = request.get_json('lat')  
-    Longitude = request.get_json('long')
+    data = request.get_json()
+
+    Latitude = data['lat']
+    Longitude = data['long']
     # Expecting 'lat,long
     user_location = f"{Latitude},{Longitude}"
     
-    all_cars = Cars.query.filter_by(availability="Unbooked").all()
+    all_cars = Cars.query.filter((Cars.availability == "Booked") | (Cars.availability == "Unbooked")).all()
     if not all_cars:
-        return jsonify({"code": 404, "message": "No available cars found"}), 404
+        return jsonify({"code": 404, "message": "Only damaged cars found"}), 404
 
     # Prepare to call the Distance Matrix API
     destinations = [f"{car.latitude},{car.longitude}" for car in all_cars]
-    origins = [f"{Latitude},{Longitude}"]
-    api_key = 'AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ'
-    url = "https://maps.googleapis.com/maps/api/distancematrix/json"
-    payload = {
-        'origins': '|'.join(origins),
-        'destinations': '|'.join(destinations),
-        'key': api_key
-    }
-    response = requests.get(url, params=payload)
+
     distances_response = get_distance_matrix([user_location], destinations, "AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ")
 
-    
-    
     elements = distances_response['rows'][0]['elements']
 
     # Lists to hold your data
     distance_values = []
-    distance_texts = []
 
     # Iterate over each element
     for elem in elements:
@@ -137,19 +129,14 @@ def find_by_nearest_distance():
         if elem['status'] == 'OK':
                 # Now we're sure 'distance' exists, we can safely access it
             distance_values.append(elem['distance']['value'])
-            distance_texts.append(elem['distance']['text'])
         else:
                 # For elements with ZERO_RESULTS or any status other than OK,
                 # append None or a placeholder to indicate the data isn't available
             distance_values.append(None)  # or a large value like float('inf')
-            distance_texts.append("Not Available")
     
         # Assign a large value to 'None' entries to ensure they are not selected as the minimum
         distance_values_with_default = [value if value is not None else float('inf') for value in distance_values]
 
-        # Now find the index of the minimum value in this new list
-        closest_car_index = distance_values_with_default.index(min(distance_values_with_default))
-        closest_car = all_cars[closest_car_index]
         
         car_distance_pairs = zip(all_cars, distance_values_with_default)
 
@@ -161,135 +148,36 @@ def find_by_nearest_distance():
         # If you truly need descending order, add reverse=True to the sorted function
 
         # Step 3: Extract the cars in sorted order for the response
-        sorted_cars = [pair[0] for pair in sorted_pairs]
+        # sorted_cars = [pair[0] for pair in sorted_pairs]
 
         # Now, assuming you have a method to serialize a car object, e.g., car.json()
         # Convert each car in the sorted list to its JSON representation
-        sorted_cars_json = [car.json() for car in sorted_cars]
-                
+        # sorted_cars_json = [car.json() for car in sorted_cars]
+
+        sorted_cars_json = []
+        for pair in sorted_pairs:
+            car = pair[0].json()
+            car["distance"] = pair[1]
+            sorted_cars_json.append(car)
 
     return jsonify({"code": 200, "CarList": sorted_cars_json})
-
-
-#returning cars that are available
-
-@app.route("/cars/available")
-def availability():
-    if request.method == 'GET':
-        available_cars = Cars.query.filter_by(availability="Unbooked").all()
-        if available_cars:
-            good_message = "Available cars retrieved successfully."
-            
-            return jsonify({
-                "code": 200,
-                "data": {"Cars": [car.json() for car in available_cars]},
-                "message": good_message
-            }), 200
-        else:
-            error_message =  "No available cars."
-            send_message_to_queue(error_message)
-            return jsonify({"code": 404, "message":error_message}), 404
 
 
 @app.route("/cars/book", methods=["PUT"])
 def book_car():
     data = request.get_json()
-    if not data or 'lat' not in data or 'long' not in data:
-        return jsonify({"code": 400, "error": "Missing latitude or longitude"}), 400
+    if not data or 'vehicle_id' not in data:
+        return jsonify({"code": 400, "error": "Missing vehicle ID"}), 400
     
-    Latitude = data['lat']
-    Longitude = data['long']
-    car_model = data.get('model', "")  # Allows for an optional car type filter
+    requested_vehicle_id = data['vehicle_id']
     
-    user_location = f"{Latitude},{Longitude}"
-    
-    query_filter = Cars.query.filter_by(availability="Unbooked")
-    if car_model:
-        query_filter = query_filter.filter_by(model=car_model)
-        all_cars = query_filter.all()
-        destinations = [f"{car.latitude},{car.longitude}" for car in all_cars]
-        distances_response = get_distance_matrix([user_location], destinations, "AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ")
-        elements = distances_response['rows'][0]['elements']
-
-    # Lists to hold your data
-        distance_values = []
-        distance_texts = []
-
-    # Iterate over each element
-        for elem in elements:
-            # Check if the status is OK to safely access 'distance' and 'duration'
-            if elem['status'] == 'OK':
-                # Now we're sure 'distance' exists, we can safely access it
-                distance_values.append(elem['distance']['value'])
-                distance_texts.append(elem['distance']['text'])
-            else:
-                # For elements with ZERO_RESULTS or any status other than OK,
-                # append None or a placeholder to indicate the data isn't available
-                distance_values.append(None)  # or a large value like float('inf')
-                distance_texts.append("Not Available")
-    
-        # Assign a large value to 'None' entries to ensure they are not selected as the minimum
-        distance_values_with_default = [value if value is not None else float('inf') for value in distance_values]
-
-        # Now find the index of the minimum value in this new list
-        closest_car_index = distance_values_with_default.index(min(distance_values_with_default))
-
-        # Continue as before
-        closest_car = all_cars[closest_car_index]
-    
-        
-        closest_car.availability = "Booked"  # Update availability
+    requested_car = Cars.query.filter_by(vehicle_id = requested_vehicle_id).first()
+    if requested_car != None:
+        requested_car.availability = "Booked"
         db.session.commit()
-        
-        return jsonify({"code": 200, "message": "Car of the model that you want is booked successfully.", "Model" : car_model, "vehicle_id": closest_car.vehicle_id}), 200
-
-
-        
+        return jsonify({"code": 200, "message": "Car has been booked successfully.", "vehicle_id": requested_vehicle_id}), 200
     
-    all_cars = query_filter.all()
-    
-    if not all_cars:
-        return jsonify({"code": 404, "message": "No available cars found of the requested type"}), 404
-    
-    destinations = [f"{car.latitude},{car.longitude}" for car in all_cars]
-    distances_response = get_distance_matrix([user_location], destinations, "AIzaSyBpPsrV2pGU20DQwJPqU5sGooE4htyfbEQ")
-    
-    if car_model == "":
-        elements = distances_response['rows'][0]['elements']
-
-    # Lists to hold your data
-        distance_values = []
-        distance_texts = []
-
-    # Iterate over each element
-        for elem in elements:
-            # Check if the status is OK to safely access 'distance' and 'duration'
-            if elem['status'] == 'OK':
-                # Now we're sure 'distance' exists, we can safely access it
-                distance_values.append(elem['distance']['value'])
-                distance_texts.append(elem['distance']['text'])
-            else:
-                # For elements with ZERO_RESULTS or any status other than OK,
-                # append None or a placeholder to indicate the data isn't available
-                distance_values.append(None)  # or a large value like float('inf')
-                distance_texts.append("Not Available")
-    
-        # Assign a large value to 'None' entries to ensure they are not selected as the minimum
-        distance_values_with_default = [value if value is not None else float('inf') for value in distance_values]
-
-        # Now find the index of the minimum value in this new list
-        closest_car_index = distance_values_with_default.index(min(distance_values_with_default))
-
-        # Continue as before
-        closest_car = all_cars[closest_car_index]
-    
-        
-        closest_car.availability = "Booked"  # Update availability
-        db.session.commit()
-        
-        return jsonify({"code": 200, "message": "Car booked successfully.", "model" : car_model, "vehicle_id": closest_car.vehicle_id}), 200
-    
-    return jsonify({"code": 500, "message": "Error fetching distances from Google API"}), 500
+    return jsonify({"code": 404, "message": "No car found with specified vehicle id"}), 404
         
                 
 # listen to the changes in the sql and update and send to the notif

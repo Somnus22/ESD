@@ -44,11 +44,11 @@ CREATE TABLE IF NOT EXISTS Cars (
 -- Insert data into the table
 INSERT INTO Cars (vehicle_id, cartype, brand, model, availability, per_hr_price, latitude, longitude) VALUES
 ('1', 'SUV', 'MERCEDES','EQB SUV', 'Unbooked', 10.10, 1.3525000, 103.9447000),
-('2', 'SEDAN', 'MERCEDES','GLA SUV', 'Booked', 8.30,34.0522000, -118.2437000),
-('3', 'SUV', 'MITSUBISHI','EVO 9', 'Unbooked', 7.50, 1.0000000, 104.0000000),
-('4', 'SEDAN', 'MITSUBISHI','OUTLANDER', 'Unbooked', 6.50, 40.7128000,-74.0060000),
-('5', 'SUV', 'MAZDA','CX3', 'Damaged', 7.90, 1.0000000,103.000000),
-('6', 'SUV', 'AUDI','A5 HATCHBACK','Booked', 9.60,34.0522000, -118.2437000);
+('2', 'SEDAN', 'MERCEDES','GLA SUV', 'Booked', 8.30, 1.31056, 103.86420),
+('3', 'SUV', 'MITSUBISHI','EVO 9', 'Unbooked', 7.50, 1.35104, 103.87140),
+('4', 'SEDAN', 'MITSUBISHI','OUTLANDER', 'Unbooked', 6.50, 1.31801, 103.89140),
+('5', 'SUV', 'MAZDA','CX3', 'Damaged', 7.90, 1.34690, 103.70966),
+('6', 'SUV', 'AUDI','A5 HATCHBACK','Booked', 9.60, 1.44845, 103.81928);
 -- ----------CARS------------------------------------------------------------------------------------
 -- -------------------------------------------------------------------------------------------------
 -- ----------REPORTS---------------------------------------------------------------------------------

@@ -43,9 +43,9 @@
                 <button class="btn btn-primary" @click="searchForNearestCar">Search for car</button> <!--v-if="!carsList"-->
             </div>
             <hr>
-            <div class="ps-3 pt-1 mb-4" v-if="carsList && !selectedCar && !bookedCar">
+            <div class="ps-3 pt-1 mb-4" v-if="carsList.length > 0 && !selectedCar && !bookedCar">
                 <div class="mb-3">
-                    <div id="map"></div>
+                    <div id="map" class="mb-3"></div>
                     <h5 class="d-inline">Cars Found:</h5>
                     <button class="btn btn-sm btn-secondary ms-3" @click="showFilter">Filter</button>
                     <button class="btn btn-primary dropdown-toggle btn-sm float-end me-5" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -99,24 +99,23 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Brand</th>
+                            <th>Car ID</th>
+                            <th>Car</th>
                             <th>Type</th>
                             <th>Available?</th>
                             <th>Price per hour</th>
-                            <th>Latitude</th> <!-- Placeholder-->
-                            <th>Longitude</th> <!-- Placeholder -->
-                            <!-- <th>Distance</th> -->
+                            <th>Distance (in km)</th>
                             <th>Select Car</th> <!-- Placeholder -->
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="car in filteredData" :key="car.vehicle_id">
-                            <td>{{ car.brand }}</td>
+                            <td>{{ car.vehicle_id }}</td>
+                            <td>{{ car.brand + " " + car.model }}</td>
                             <td>{{ car.cartype }}</td>
                             <td>{{ car.availability }}</td>
                             <td>{{ car.per_hr_price }}</td>
-                            <td>{{ car.latitude }}</td>
-                            <td>{{ car.longitude }}</td>
+                            <td>{{ (Math.round((car.distance/1000) * 100) / 100).toFixed(2) }}</td>
                             <td><button class="btn btn-success" @click="selectedCar = car">Select</button></td>
                         </tr>
                     </tbody>
@@ -235,14 +234,14 @@
                     // Apply distance and price sorting
                     if (this.priceSortOrder === 'ascending') {
                         filtered.sort((a, b) => a.per_hr_price - b.per_hr_price);
-                    } else {
+                    } else if (this.priceSortOrder === 'descending'){
                         filtered.sort((a, b) => b.per_hr_price - a.per_hr_price);
                     }
 
                     if (this.distanceSortOrder === 'ascending') {
-                        // filtered.sort((a, b) => a.per_hr_price - b.per_hr_price);
-                    } else {
-                        // filtered.sort((a, b) => b.per_hr_price - a.per_hr_price);
+                        filtered.sort((a, b) => a.distance - b.distance);
+                    } else if (this.distanceSortOrder === 'descending'){
+                        filtered.sort((a, b) => b.distance - a.distance);
                     }
 
                     return filtered;
@@ -284,7 +283,7 @@
                             content: pinStyle.element
                         })
                         marker.addListener("click", () => {
-                            this.infowindow.setContent("<h5 class='h5'> Vehicle ID:" + car.vehicle_id + "</h5> <hr class='black'>" + "<div style='color:black;'> Address (may not be readable, use coordinates if necessary): " + car.address + "\n Coordinates: " + car.latitude + "," + car.longitude + "</div>")
+                            this.infowindow.setContent("<h5 class='h5'> Vehicle ID:" + car.vehicle_id + ", Vehicle: " + car.brand + " " + car.model + "</h5> <hr class='black'>" + "<div style='color:black;'> Address (if exists): " + car.address + "\n Coordinates: " + car.latitude + "," + car.longitude + "</div>")
                             this.infowindow.open({
                             anchor: marker,
                             });
@@ -347,20 +346,6 @@
                         this.filter= true;
                     }
                 },
-                // async convertCarLocationsToAddresses(){
-                //     const {Geocoder} = await google.maps.importLibrary("geocoding");
-                //     var geocoder = new Geocoder();
-                //     for (let i=0; i<this.carsList.length;i++){
-                //         let car = this.carsList[i];
-                //         let location = new google.maps.LatLng(car.Latitude, car.Longitude);
-                //         geocoder.geocode({'location' : location},  function(results, status) {
-                //             if (status === 'OK') {
-                //                 car.Address = results[0].formatted_address
-                //                 console.log(car.Address)
-                //             }
-                //         })
-                //     }
-                // },
                 searchForNearestCar() {
                 // Get user's location using Geolocation API
                     if (navigator.geolocation) {
@@ -378,6 +363,7 @@
                                         car.latitude = parseFloat(car.latitude)
                                         car.longitude = parseFloat(car.longitude)
                                         car.per_hr_price = parseFloat(car.per_hr_price)
+                                        car.distance = parseFloat(car.distance)
                                     }
                                     ref.carsList = carsList
                                     ref.extractOptions();
@@ -420,8 +406,7 @@
                     };
                     xhr.send(JSON.stringify({
                         "user_id": this.userId,
-                        "lat" : this.selectedCar.latitude,
-                        "long": this.selectedCar.longitude
+                        "vehicle_id" : this.selectedCar.vehicle_id
                     }))
                 },
                 clearFilters() {
