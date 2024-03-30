@@ -146,12 +146,12 @@
         <div v-else>
             <div class="ms-3 mt-4">
                 <h5>Your booking details are as follows: </h5>
-                <p>Car Brand: {{bookedCar.brand}}</p>
-                <p>Car Type: {{bookedCar.cartype}}</p>
-                <p>Car price per hour: {{bookedCar.per_hr_price}}</p>
-                <p>Car Latitude: {{bookedCar.latitude}}</p> <!-- Placeholder-->
-                <p>Car Longitude: {{bookedCar.longitude}}</p> <!-- Placeholder -->
-                <p>Car Address: {{bookedCar.address}}</p> <!-- Placeholder -->
+                <p>Brand: {{bookedCar.brand}}</p>
+                <p>Type: {{bookedCar.cartype}}</p>
+                <p>Price per hour: {{bookedCar.per_hr_price}}</p>
+                <p>Latitude: {{bookedCar.latitude}}</p> <!-- Placeholder-->
+                <p>Longitude: {{bookedCar.longitude}}</p> <!-- Placeholder -->
+                <p>Address: {{bookedCar.address}}</p> <!-- Placeholder -->
                 <p>Booking Date and Time: {{bookedCar.bookingTime}}</p> 
             </div>
             <div v-if="reportStarted == false">
@@ -163,6 +163,21 @@
                 <div class="ps-3 pt-3">
                     <h5>No booking found</h5>
                 </div>
+            </div>
+            <div v-else-if="reportMade == false && reportStarted == true" style="padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                <h2 class="mb-4">Report</h2>
+                <div class="mb-4" v-for="damage in damages" :key="damage.id">
+                    <label :for="'damage' + damage.id + 'Description'" style="display: block; margin-bottom: 5px;">Damage {{damage.id}}</span> Description:</label>
+                    <textarea :id="'damage' + damage.id + 'Description'" :v-model="damage.desc" style="width: 30%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; resize: vertical;"></textarea>
+                </div>
+                Have more damages?  <button class="btn btn-secondary ms-3" @click="addDamage">Add row</button>
+                <button class="btn btn-primary ms-3" @click="reportCar">Submit report</button>
+            </div>
+            <div v-else-if="reportMade == true" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+                <h2 class="mb-4">Report</h2>
+                <div>Report sent! Would you like to cancel your booking?</div>
+
+            <button @click="cancelBooking" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Cancel Booking</button>
             </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
@@ -200,6 +215,7 @@
                 map: null,
                 markers: [],
                 infowindow: null,
+                damages: [{"id":1, "desc": ""}]
             },
             computed: {
                 filteredData() {
@@ -236,6 +252,10 @@
 
             },
             methods: {
+                addDamage(){
+                    let currLen = this.damages.length
+                    this.damages.push({"id": currLen+1, "desc": ""})
+                },
                 async initMarkers(){
                     const {Geocoder} = await google.maps.importLibrary("geocoding");
                     const { InfoWindow } = await google.maps.importLibrary("maps");
@@ -393,7 +413,8 @@
                             console.log("Booking successful");
                             response = JSON.parse(xhr.response)
                             ref.bookedCar = ref.selectedCar
-                            // ref.bookingTime = response.data["Rental Log"].data.log_time
+                            console.log(response.data["Rental Log"].data)
+                            ref.bookedCar.bookingTime = response.data["Rental Log"].data.log_time
                             ref.selectedCar = null 
                         }
                     };
@@ -401,7 +422,6 @@
                         "user_id": this.userId,
                         "lat" : this.selectedCar.latitude,
                         "long": this.selectedCar.longitude
-
                     }))
                 },
                 clearFilters() {
@@ -427,47 +447,55 @@
                     }));
                 },
                 reportCar() {
-                    // Validate date and damage description
-                    if (!this.reportDate || !this.damageDescription) {
-                        alert('Please provide both date and damage description.');
-                        return;
-                    }
                     // Construct report data
+                    damages = []
+                    reportDate = new Date().toString();
+                    for (let i=0;i<this.damages.length;i++){
+                        damages.push(this.damages[i].desc)
+                    }
                     const reportData = {
-                        user_id: this.userId,
-                        vehicle_id: this.bookedCar.vehicle_id,
-                        date: this.reportDate,
-                        damages: [this.damageDescription]
+                        'user_id': this.userId,
+                        'vehicle_id': this.bookedCar.vehicle_id,
+                        'date': reportDate,
+                        'damages': damages
                     };
-                    // Make POST request to report car
-                    axios.post('http://localhost:8000/jomletsgo/reportcar', reportData)
-                        .then(response => {
-                            alert("Car reported successfully");
-                            console.log('Reported car data:', response.data);
-                            this.reportDate = '';
-                            this.damageDescription = '';
-                            this.reportMade = true;
-                        })
-                        .catch(error => {
-                            console.error('Error reporting car:', error);
-                        });
+                    var xhr = new XMLHttpRequest();
+                    var ref = this
+                    xhr.open("POST", "http://localhost:8000/jomletsgo/reportcar");
+                    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                    xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4 && xhr.status === 201) {
+                            console.log("Car reported successfully");
+                            response = JSON.parse(xhr.response)
+                            console.log(response)
+                            ref.reportDate = '';
+                            ref.damageDescription = '';
+                            ref.reportMade = true;
+                        }
+                    };
+                    xhr.send(JSON.stringify(reportData))
                 },
                 //cancel booking after report is created
                 cancelBooking(){
                     const report = {
                         vehicle_id: this.bookedCar.vehicle_id,
                     }
-                    axios.post('http://localhost:5102/cancel', report)
-                        .then(response => {
-                            alert("Car booking cancelled");
-                            console.log('Cancelled:', response.data);
-                            this.bookedCar = null;
-                            this.reportMade = false;
-                        })
-                        .catch(error => {
-                            console.error('Error cancelling booking:', error);
-                        });
-
+                    var xhr = new XMLHttpRequest();
+                    var ref = this
+                    xhr.open("POST", "http://localhost:8000/jomletsgo/reportcar");
+                    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                    xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4 && xhr.status === 201) {
+                            console.log("Car booking cancelled");
+                            response = JSON.parse(xhr.response)
+                            console.log(response)
+                            ref.bookedCar = null;
+                            ref.reportMade = false;
+                        }
+                    };
+                    xhr.send(JSON.stringify(report))
                 }
             }
         });
