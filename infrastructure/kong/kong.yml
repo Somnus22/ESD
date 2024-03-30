@@ -49,6 +49,18 @@ services:
           - GET
           - OPTIONS
 
+  - name: notify
+    url: http://notifications:5004/send_notification
+    routes:
+      - name: notify
+        paths:
+          - /jomletsgo/sendnotification
+        methods:
+          - POST
+          - PUT
+          - GET
+          - OPTIONS          
+
 plugins:
   - name: cors
     config:
