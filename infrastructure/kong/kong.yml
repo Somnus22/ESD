@@ -60,8 +60,6 @@ plugins:
         - PUT
         - DELETE
       headers:
-        - "Origin"
-        - "Authorization"
         - "Content-Type"
       exposed_headers:
         - "X-Custom-Header"
