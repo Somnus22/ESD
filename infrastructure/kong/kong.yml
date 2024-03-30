@@ -52,7 +52,7 @@ services:
   - name: notify
     url: http://notifications:5004/send_notification
     routes:
-      - name: notify
+      - name: NOTIFY
         paths:
           - /jomletsgo/sendnotification
         methods:
