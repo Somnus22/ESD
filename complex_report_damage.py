@@ -55,7 +55,7 @@ def processReportDamage(report):
     # Update car status as "Damaged" in car inventory
     if report_result["code"] in range (200,300):
         print('\n\n-----Invoking car inventory microservice-----')
-        update_result = invoke_http(car_inventory_URL +'/' + report['vehicle_id'] , method="PUT")
+        update_result = invoke_http(car_inventory_URL +'/' + str(report['vehicle_id']) , method="PUT")
         print('update_result:', update_result)
         print("\nUpdated car availability to 'Damaged'.\n")
         return report_result

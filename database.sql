@@ -60,7 +60,9 @@ SET time_zone = '+08:00';
 CREATE DATABASE IF NOT EXISTS `Report` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 USE `Report`;
 
+DROP TABLE IF EXISTS `Damage`;
 DROP TABLE IF EXISTS `Report`;
+
 CREATE TABLE IF NOT EXISTS `Report` (
   `report_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
@@ -69,7 +71,6 @@ CREATE TABLE IF NOT EXISTS `Report` (
   PRIMARY KEY (`report_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS `Damage`;
 CREATE TABLE IF NOT EXISTS `Damage` (
   `report_id` int(11) NOT NULL,
   `damage_num` int(11) NOT NULL,
@@ -77,6 +78,7 @@ CREATE TABLE IF NOT EXISTS `Damage` (
   PRIMARY KEY (report_id, damage_num),
   FOREIGN KEY (report_id) REFERENCES report(report_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
 -- ----------REPORTS---------------------------------------------------------------------------------
 -- --------------------------------------------------------------------------------------------------
 -- ----------RENTAL LOG------------------------------------------------------------------------------
