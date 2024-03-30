@@ -72,7 +72,7 @@ def create_user():
     data = request.get_json()
     email = data["emailAddress"]
     if (db.session.scalars(
-      db.select(Users).filter_by(Email_Address = email).
+      db.select(Users).filter_by(email_address = email).
       limit(1)
       ).first()
       ):
