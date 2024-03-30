@@ -12,7 +12,7 @@ services:
           - PUT
           - GET
           - OPTIONS
-  
+
   - name: report
     url: http://report_damage:5102/create_report
     routes:
@@ -24,7 +24,19 @@ services:
           - PUT
           - GET
           - OPTIONS
-  
+
+  - name: cancel
+    url: http://report_damage:5102/cancel
+    routes:
+      - name: CANCEL
+        paths:
+          - /jomletsgo/cancelcar
+        methods:
+          - POST
+          - PUT
+          - GET
+          - OPTIONS
+
   - name: carbook
     url: http://car_booking:5101/car_rental
     routes:
@@ -36,3 +48,21 @@ services:
           - PUT
           - GET
           - OPTIONS
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+      headers:
+        - "Origin"
+        - "Authorization"
+        - "Content-Type"
+      exposed_headers:
+        - "X-Custom-Header"
+      max_age: 3600
