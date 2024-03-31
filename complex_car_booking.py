@@ -56,7 +56,14 @@ def processCarRental(rental_info):
     code = car_inventory_update["code"]
     message = json.dumps(car_inventory_update)
 
- 
+    if code == 401:
+        print('\n\n-----Publishing the error message with for Car Inventory Microservice-----')
+        return {
+            "code": 401,
+            "data": {"Car Inventory Update": car_inventory_update},
+            "message": "Car has already been booked"
+        }
+
     if code not in range(200, 300):
         print('\n\n-----Publishing the error message with for Car Inventory Microservice-----')
 

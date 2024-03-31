@@ -33,17 +33,18 @@
                     <button type="button" class="nav-link active" @click="page='carSearch';selectedCar=null">Car Search</button>
                   </li>
                   <li class="nav-item">
-                    <button type="button" class="nav-link active" @click="page='bookingDetails'">Booking Details</button>
+                    <button type="button" class="nav-link active" @click="page='bookingDetails'; console.log(page)">Booking Details</button>
                   </li>
               </div>
             </div>
           </nav>
         <div v-if="page == 'carSearch'">
             <div class="ps-3 pt-3">
-                <button class="btn btn-primary" @click="searchForNearestCar">Search for car</button> <!--v-if="!carsList"-->
+                <button class="btn btn-primary" @click="searchForNearestCar" v-if="carsList.length == 0">Search for car</button>
+                <button class="btn btn-primary" @click="searchForNearestCar" v-else>Refresh cars list</button> <!--v-if="!carsList"-->
             </div>
             <hr>
-            <div class="ps-3 pt-1 mb-4" v-if="carsList.length > 0 && !selectedCar && !bookedCar">
+            <div class="ps-3 pt-1 mb-4" v-if="carsList.length > 0">
                 <div class="mb-3">
                     <div id="map" class="mb-3"></div>
                     <h5 class="d-inline">Cars Found:</h5>
@@ -116,67 +117,138 @@
                             <td>{{ car.availability }}</td>
                             <td>{{ car.per_hr_price }}</td>
                             <td>{{ (Math.round((car.distance/1000) * 100) / 100).toFixed(2) }}</td>
-                            <td><button class="btn btn-success" @click="selectedCar = car">Select</button></td>
+                            <td><button class="btn btn-success" @click="selectedCar = car; page = 'carSelected'">Select</button></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div v-else-if="noCars">
-                <div class="ps-3 pt-1 mb-4">
-                    No available cars
-                </div>
-            </div>
-            <div v-if="selectedCar && bookedCar == null" class="ps-3 pt-1">
+        </div>
+        <div v-else-if="page == 'carSelected'" class="ms-2 mt-3">
+            <div class="ps-3 pt-1">
                 <h5>You have selected the following car:</h5>
+                <p>ID: {{selectedCar.vehicle_id}}</p>
                 <p>Brand: {{selectedCar.brand}}</p>
                 <p>Type: {{selectedCar.cartype}}</p>
                 <p>Price per hour: {{selectedCar.per_hr_price}}</p>
-                <p>Latitude: {{selectedCar.latitude}}</p> <!-- Placeholder-->
-                <p>Longitude: {{selectedCar.longitude}}</p> <!-- Placeholder -->
-                <!-- <p>Distance: {{selectedCar.Distance}}</p> -->
+                <p>Distance (in km): {{(Math.round((selectedCar.distance/1000) * 100) / 100).toFixed(2)}}</p>
                 <h6 v-if="selectedCar.availability == 'Booked'"> The car is <span class="text-danger">currently booked.</span> Would you like to receive an email when it becomes available?</h6>
-                <button class="btn btn-primary mt-3" v-if="selectedCar.availability == 'Booked'" @click="requestNotification">Notify me when the car is available</button> <!-- havent put in vue methods -->
-                <button class="btn btn-primary mt-2" v-else @click="bookCar">Book car</button>
-            </div>
-            <div v-else-if="bookedCar != null" class="ps-3 pt-1 mb-4">
-                Booking successful! You may view your booking details later under the Booking Details page.
+                <button class="btn btn-primary mt-3" v-if="selectedCar.availability == 'Booked'" @click="requestNotification" data-bs-toggle="modal" data-bs-target="#notifModal">Notify me when the car is available</button>
+                <button class="btn btn-primary mt-2" v-else @click="bookCar" data-bs-toggle="modal" data-bs-target="#bookingModal" >Book car</button>
+                <div class="modal fade" id="notifModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h1 class="modal-title fs-5">Request for notification result</h1>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="notifModalBody">
+                          
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h1 class="modal-title fs-5">Booking result</h1>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="bookingModalBody">
+                          
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="page='carSearch'">OK</button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div v-else>
-            <div class="ms-3 mt-4">
-                <h5>Your booking details are as follows: </h5>
-                <p>Brand: {{bookedCar.brand}}</p>
-                <p>Type: {{bookedCar.cartype}}</p>
-                <p>Price per hour: {{bookedCar.per_hr_price}}</p>
-                <p>Latitude: {{bookedCar.latitude}}</p> <!-- Placeholder-->
-                <p>Longitude: {{bookedCar.longitude}}</p> <!-- Placeholder -->
-                <p>Address: {{bookedCar.address}}</p> <!-- Placeholder -->
-                <p>Booking Date and Time: {{bookedCar.bookingTime}}</p> 
-            </div>
-            <div v-if="reportStarted == false">
-                <h5 class="ms-3 pt-4">Have any issues with the car?</h5>
-                <button class="btn btn-primary ms-3" @click="reportStarted=true">Create damage report</button>
-            </div>
-            <!--If car selected and booked for report-->
-            <div v-if="bookedCar === null">
-                <div class="ps-3 pt-3">
+            <div v-if="bookedCar == null" class="ms-2 mt-3">
+                <div>
                     <h5>No booking found</h5>
                 </div>
             </div>
-            <div v-else-if="reportMade == false && reportStarted == true" style="padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                <h2 class="mb-4">Report</h2>
-                <div class="mb-4" v-for="damage in damages" :key="damage.id">
-                    <label :for="'damage' + damage.id + 'Description'" style="display: block; margin-bottom: 5px;">Damage {{damage.id}}</span> Description:</label>
-                    <textarea :id="'damage' + damage.id + 'Description'" :v-model="damage.desc" style="width: 30%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; resize: vertical;"></textarea>
+            <div v-else class="ms-2 mt-3">
+                <div>
+                    <h5>Your booking details are as follows: </h5>
+                    <p>Brand: {{bookedCar.brand}}</p>
+                    <p>Type: {{bookedCar.cartype}}</p>
+                    <p>Price per hour: {{bookedCar.per_hr_price}}</p>
+                    <p>Latitude: {{bookedCar.latitude}}</p> <!-- Placeholder-->
+                    <p>Longitude: {{bookedCar.longitude}}</p> <!-- Placeholder -->
+                    <p>Address: {{bookedCar.address}}</p> <!-- Placeholder -->
+                    <p>Booking Date and Time: {{bookedCar.bookingTime}}</p> 
                 </div>
-                Have more damages?  <button class="btn btn-secondary ms-3" @click="addDamage">Add row</button>
-                <button class="btn btn-primary ms-3" @click="reportCar">Submit report</button>
+                <div v-if="reportStarted == false">
+                    <h5 class="ms-3 pt-4">Have any issues with the car?</h5>
+                    <button class="btn btn-primary ms-3" @click="reportStarted=true">Create damage report</button>
+                </div>
+                <!--If car selected and booked for report-->
+                <div v-else-if="reportMade == false && reportStarted == true" style="padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                    <h2 class="mb-4">Report</h2>
+                    <div class="mb-4" v-for="damage in damages" :key="damage.id">
+                        <label :for="'damage' + damage.id + 'Description'" style="display: block; margin-bottom: 5px;">Damage {{damage.id}}</span> Description:</label>
+                        <textarea :id="'damage' + damage.id + 'Description'" :v-model="damage.desc" style="width: 30%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; resize: vertical;"></textarea>
+                    </div>
+                    Have more damages?  <button class="btn btn-secondary ms-3" @click="addDamage">Add row</button>
+                    <button class="btn btn-primary ms-3" @click="reportCar">Submit report</button>
+                </div>
+                <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h1 class="modal-title fs-5">Report result</h1>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="bookingModalBody">
+                          Your report was successfully sent. Would you like to cancel your booking?
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-primary" @click="cancelBooking" data-bs-dismiss="modal">Yes</button>
+                          <button type="button" class="btn btn-danger" @click="reportStarted=false; reportMade=false" data-bs-dismiss="modal">No</button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="reportFailedModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h1 class="modal-title fs-5">Report result</h1>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          Your report could not be submitted
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h1 class="modal-title fs-5">Cancellation result</h1>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          Your booking has been cancelled. Thank you.
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
             </div>
-            <div v-else-if="reportMade == true" style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin-top: 20px;">
-                <h2 class="mb-4">Report</h2>
-                <div>Report sent! Would you like to cancel your booking?</div>
-
-            <button @click="cancelBooking" style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Cancel Booking</button>
             </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
@@ -193,9 +265,8 @@
             el: '#app',
             data: {
                 carsList: [],
-                noCars: false,
                 filter: false,
-                userId: '2', // assume we know userId
+                userId: 2, // assume we know userId
                 distanceSortOrder: 'ascending',
                 priceSortOrder: "",
                 typeOptions: [],
@@ -283,7 +354,7 @@
                             content: pinStyle.element
                         })
                         marker.addListener("click", () => {
-                            this.infowindow.setContent("<h5 class='h5'> Vehicle ID:" + car.vehicle_id + ", Vehicle: " + car.brand + " " + car.model + "</h5> <hr class='black'>" + "<div style='color:black;'> Address (if exists): " + car.address + "\n Coordinates: " + car.latitude + "," + car.longitude + "</div>")
+                            this.infowindow.setContent("<h5 class='h5'> Vehicle ID: " + car.vehicle_id + ", Vehicle: " + car.brand + " " + car.model + "</h5> <hr class='black'>" + "<div style='color:black;'> Address (if exists): " + car.address + "<br> Coordinates: " + car.latitude + "," + car.longitude + "</div>")
                             this.infowindow.open({
                             anchor: marker,
                             });
@@ -399,8 +470,12 @@
                             console.log("Booking successful");
                             response = JSON.parse(xhr.response)
                             ref.bookedCar = ref.selectedCar
-                            console.log(response.data["Rental Log"].data)
                             ref.bookedCar.bookingTime = response.data["Rental Log"].data.log_time
+                            ref.selectedCar = null 
+                            document.getElementById('bookingModalBody').innerText = "Booking successful! You may view your booking details later under the Booking Details page."
+                        }
+                        else if(xhr.readyState === 4 && xhr.status === 401){
+                            document.getElementById('bookingModalBody').innerText = "Booking unsuccessful. The car has already been booked."
                             ref.selectedCar = null 
                         }
                     };
@@ -424,6 +499,9 @@
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState === 4 && xhr.status === 200) {
                             console.log("Request for notification successful");
+                            document.getElementById('notifModalBody').innerText = "You have been added to the waiting list and will receive an email when the car is ready"
+                        }else if (xhr.readyState === 4 && xhr.status !== 200){
+                            document.getElementById('notifModalBody').innerText = "Notification failed"
                         }
                     };
                     xhr.send(JSON.stringify({
@@ -457,6 +535,11 @@
                             ref.reportDate = '';
                             ref.damageDescription = '';
                             ref.reportMade = true;
+                            const myModal = new bootstrap.Modal('#reportModal')
+                            myModal.show()
+                        }else if (xhr.readyState === 4 && xhr.status !== 201){
+                            const myModal = new bootstrap.Modal('#reportFailedModal')
+                            myModal.show()
                         }
                     };
                     xhr.send(JSON.stringify(reportData))
@@ -472,12 +555,14 @@
                     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                     xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
                     xhr.onreadystatechange = function () {
-                        if (xhr.readyState === 4 && xhr.status === 201) {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
                             console.log("Car booking cancelled");
                             response = JSON.parse(xhr.response)
                             console.log(response)
                             ref.bookedCar = null;
                             ref.reportMade = false;
+                            const myModal = new bootstrap.Modal('#cancelModal')
+                            myModal.show()
                         }
                     };
                     xhr.send(JSON.stringify(report))

@@ -41,7 +41,7 @@ def createRentalLog():
     if request.is_json:
         rental_data = request.get_json()
         result = processRentalLog(rental_data)
-        return jsonify(result), result["code"]
+        return result
     
     else:
         data = request.get_data()
@@ -117,28 +117,25 @@ def getRentalLog(user_id):
 def processRentalLog(rental_data):
     print("Processing a rental log entry:")
     print(rental_data)
+    if ("user_id" not in rental_data) or ("vehicle_id" not in rental_data):
+        return jsonify(
+        {
+            "code": 400,
+            "message": "Missing user ID or Vehicle ID"
+        }
+        ), 400
     new_log = Rental_log(user_id = rental_data["user_id"], vehicle_id = rental_data["vehicle_id"])
     db.session.add(new_log)
     db.session.commit()  # This step generates the log_id
-
-    
-    if "ERROR" in rental_data['user_id']:
-        code = 400
-        message = 'Failed creation of rental log entry.'
-    else:
-        code = 201
-        message = 'Successful creation of rental log entry.'
-    
-    print(message+'\n')
-
-    return {
-        'code': code,
-        'data': {
-            'log_id': new_log.log_id,
-            'log_time': new_log.log_entry_time
-        },
-        'message': message
+    data = {
+        'log_id': new_log.log_id,
+        'log_time': new_log.log_entry_time
     }
+    return jsonify({
+        "code": 201,
+        "data" : data,
+        "message": "Rental log successfully created"
+    }), 201
 
 # Execute this program only if it is run as a script (not by 'import')
 if __name__ == "__main__":
