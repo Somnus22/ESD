@@ -9,7 +9,7 @@
 
 5. If you're on Windows, use docker-compose -f win_compose.yaml up. 
 
-6. If none of these options work, use the standard compose.yaml file but you will need to adjust the  "db_URL" in the environment variable for each of the services - "car_inventory", "rental_log", "report", "users" - configuration that suits your mySQL set up.
+6. If none of these options work, use the standard compose.yaml file but you will need to adjust the  "db_URL" in the environment variable for each of the services - "car_inventory", "rental_log", "report", "users" - to a configuration that suits your mySQL set up.
 
 7. You can import the custom Postman tests to tests if the services are working.
 
