@@ -99,12 +99,15 @@ services:
   grafana:
     image: grafana/grafana-oss:10.2.3
     restart: always
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
     networks:
       - jomletsgo
     ports:
       - "13000:3000"
     volumes:
-      - grafanadata:/var/lib/grafana 
+      - grafanadata:/var/lib/grafana
+      - ./infrastructure/grafana/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
   #######################################
   # Prometheus
   #######################################
@@ -117,22 +120,9 @@ services:
       - "9090:9090"
     volumes:
       - prometheusdata:/etc/prometheus   
-  ####################################
-  # RabbitMQ: The messaging broker   
-  ####################################
-  rabbitmq:
-    image: rabbitmq:3-management
-    hostname: esd-rabbit
-    restart: always
-    networks:
-      - jomletsgo
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    volumes: 
-      - ./rabbitmq.config:/etc/rabbitmq/rabbitmq.config
-      - ./rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json
-      - rabbitmq_data:/var/lib/rabbitmq
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./infrastructure/prometheus/metrics.json:/etc/prometheus/metrics.json
+
   
   ###################################
   # Car_inventory

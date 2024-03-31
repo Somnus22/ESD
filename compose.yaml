@@ -99,12 +99,15 @@ services:
   grafana:
     image: grafana/grafana-oss:10.2.3
     restart: always
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
     networks:
       - jomletsgo
     ports:
       - "13000:3000"
     volumes:
-      - grafanadata:/var/lib/grafana 
+      - grafanadata:/var/lib/grafana
+      - ./infrastructure/grafana/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
   #######################################
   # Prometheus
   #######################################
@@ -116,7 +119,10 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - prometheusdata:/etc/prometheus           
+      - prometheusdata:/etc/prometheus   
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./infrastructure/prometheus/metrics.json:/etc/prometheus/metrics.json
+          
   ####################################
   # RabbitMQ: The messaging broker   
   ####################################
