@@ -5,6 +5,8 @@ name: jomletsgo
 volumes:
   pgdata:
   rabbitmq_data:
+  prometheusdata:
+  grafanadata:
 
 networks:
   jomletsgo:
@@ -12,6 +14,9 @@ networks:
     name: jomletsgo-Kong
 
 services:
+   #######################################
+  # Postgres: The database used by Kong
+  #######################################
   kong-database:
     image: postgres:15 # tested 20231101; Ref: https://docs.konghq.com/gateway/latest/support/third-party/
     platform: linux/amd64  # <- required for Mac M1 chip. Otherwise, can remove
@@ -88,6 +93,36 @@ services:
       - ./infrastructure/kong/kong.yml:/etc/kong/kong.yml
     command: > 
       /bin/sh -c "kong config db_import /etc/kong/kong.yml && kong start"
+  #######################################
+  # Grafana Open Source
+  #######################################
+  grafana:
+    image: grafana/grafana-oss:10.2.3
+    restart: always
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    networks:
+      - jomletsgo
+    ports:
+      - "13000:3000"
+    volumes:
+      - grafanadata:/var/lib/grafana
+      - ./infrastructure/grafana/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
+  #######################################
+  # Prometheus
+  #######################################
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    restart: always
+    networks:
+      - jomletsgo
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheusdata:/etc/prometheus   
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./infrastructure/prometheus/metrics.json:/etc/prometheus/metrics.json
+
   ####################################
   # RabbitMQ: The messaging broker   
   ####################################

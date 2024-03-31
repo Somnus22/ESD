@@ -87,3 +87,11 @@ plugins:
         - "Access-Control-Allow-Origin"
         - "Content-Type"
       max_age: 3600
+  
+  - name: prometheus
+    config:
+      bandwidth_metrics: true
+      status_code_metrics: true
+      per_consumer: true
+      upstream_health_metrics: true
+      latency_metrics: true

@@ -9,8 +9,10 @@ from threading import Thread
 import requests
 from invokes import invoke_http
 from os import environ
+from prometheus_flask_exporter import PrometheusMetrics
 app = Flask(__name__)
 CORS(app) 
+metrics = PrometheusMetrics(app)
 
 r_queue_name = 'Request_Car'
 exchangename = "notifications_exchange"
@@ -169,7 +171,7 @@ def send_notification():
 
 def run_flask_app():
     print("This is flask " + os.path.basename(__file__) + " for sending notifications...")
-    app.run(host="0.0.0.0", port=5004)
+    app.run(host="0.0.0.0", debug= False, port=5004)
 
 if __name__ == "__main__":
     # Start Flask app in another thread

@@ -5,6 +5,7 @@ import os, sys
 from os import environ
 import requests
 from invokes import invoke_http
+from prometheus_flask_exporter import PrometheusMetrics
 
 app = Flask(__name__)
 CORS(app)
@@ -12,6 +13,7 @@ CORS(app)
 report_URL = environ.get("report_URL") or "http://localhost:5003/report"
 car_inventory_URL = environ.get("car_inventory_URL") or "http://localhost:5000/cars"
 rental_log_URL = environ.get("rental_log_URL") or "http://localhost:5002/rental_log"
+metrics = PrometheusMetrics(app)
 
 #create report
 @app.route("/create_report", methods=['POST'])
@@ -109,7 +111,7 @@ def update_rental_log(report):
 if __name__ == "__main__":
     print("This is flask " + os.path.basename(__file__) +
           " for creating damage reports...")
-    app.run(host="0.0.0.0", port=5102, debug=True)
+    app.run(host="0.0.0.0", port=5102, debug=False)
     # Notes for the parameters:
     # - debug=True will reload the program automatically if a change is detected;
     #   -- it in fact starts two instances of the same flask program,

@@ -1,0 +1,47 @@
+[
+    {
+      "targets": [
+        "car_inventory:5000"
+      ],
+      "labels": {
+        "env": "dev",
+        "job": "docker"
+      }
+    },
+    {
+        "targets": [
+          "notifications:5004"
+        ],
+        "labels": {
+          "env": "dev",
+          "job": "docker"
+        }
+      },
+      {
+        "targets": [
+          "car_search:5100"
+        ],
+        "labels": {
+          "env": "dev",
+          "job": "docker"
+        }
+      },
+      {
+        "targets": [
+          "car_booking:5101"
+        ],
+        "labels": {
+          "env": "dev",
+          "job": "docker"
+        }
+      },
+      {
+        "targets": [
+          "report_damage:5102"
+        ],
+        "labels": {
+          "env": "dev",
+          "job": "docker"
+        }
+      }
+]

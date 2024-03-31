@@ -5,10 +5,13 @@ from flask_cors import CORS
 from os import environ
 import requests
 import os
+from prometheus_flask_exporter import PrometheusMetrics
+
 app = Flask(__name__)
 CORS(app)
 
 car_inventory_URL = environ.get('car_inventory_URL') or "http://localhost:5000/cars"
+metrics = PrometheusMetrics(app)
 
 
 @app.route("/findNearestCars",methods=['POST'])
@@ -36,6 +39,6 @@ def get_all():
 if __name__ == '__main__':
     print("This is flask " + os.path.basename(__file__) +
         " to search for cars")
-    app.run(host="0.0.0.0",port=5100, debug=True)
+    app.run(host="0.0.0.0",port=5100, debug=False)
 
 

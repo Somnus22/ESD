@@ -5,6 +5,8 @@ name: jomletsgo
 volumes:
   pgdata:
   rabbitmq_data:
+  prometheusdata:
+  grafanadata:
 
 networks:
   jomletsgo:
@@ -91,6 +93,30 @@ services:
       - ./infrastructure/kong/kong.yml:/etc/kong/kong.yml
     command: > 
       /bin/sh -c "kong config db_import /etc/kong/kong.yml && kong start"
+  #######################################
+  # Grafana Open Source
+  #######################################
+  grafana:
+    image: grafana/grafana-oss:10.2.3
+    restart: always
+    networks:
+      - jomletsgo
+    ports:
+      - "13000:3000"
+    volumes:
+      - grafanadata:/var/lib/grafana 
+  #######################################
+  # Prometheus
+  #######################################
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    restart: always
+    networks:
+      - jomletsgo
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheusdata:/etc/prometheus           
   ####################################
   # RabbitMQ: The messaging broker   
   ####################################

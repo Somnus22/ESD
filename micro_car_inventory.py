@@ -8,6 +8,8 @@ import amqp_connection
 from sqlalchemy import event
 from os import environ
 from sqlalchemy import  Numeric
+from prometheus_flask_exporter import PrometheusMetrics
+
 
 app = Flask(__name__)
 CORS(app)
@@ -16,6 +18,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+metrics = PrometheusMetrics(app)
 
 class Cars(db.Model):
     __tablename__ = 'Cars'
@@ -314,7 +317,7 @@ def update_availability(vehicle_id):
         ), 500
     
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=5000, debug=True,threaded=True)
+    app.run(host='0.0.0.0',port=5000, debug=False,threaded=True)
 
 #ssl_context=('cert.pem', 'key.pem'),host='0.0.0.0', 
 
