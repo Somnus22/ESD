@@ -257,6 +257,23 @@ def processNotifications(notifications):
     print("Notifications: Recording notifications:")
     print(notifications)
     
+@app.route("/end_trip", methods=["POST"])
+def end_trip():
+    # Here you would update the car's status to 'Unbooked' in your database
+    vehicle_id = request.get_json()['vehicle_id']
+    try:
+        reservedCar = db.session.query(Cars).filter_by(vehicle_id=vehicle_id).first()
+        if reservedCar:
+            reservedCar.availability = "Unbooked"
+            db.session.commit()
+
+            # Now, check if any user is waiting for this car to become available
+            # This could be a function that checks a waiting list and notifies the user(s)
+
+            return jsonify({"message": "Trip ended and car is now available."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # update car availability status as "damaged"
 @app.route("/cars/<vehicle_id>", methods=['PUT'])
 def update_availability(vehicle_id):
