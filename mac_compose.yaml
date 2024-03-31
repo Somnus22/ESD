@@ -125,6 +125,8 @@ services:
 
       PYTHONUNBUFFERED: 1
       TZ: Asia/Singapore
+    ports:
+      "5000:5000"
 
   #######################################################
   # Rental Log
