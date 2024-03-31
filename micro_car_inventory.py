@@ -175,6 +175,8 @@ def book_car():
     
     requested_car = Cars.query.filter_by(vehicle_id = requested_vehicle_id).first()
     if requested_car != None:
+        if requested_car.availability == "Booked":
+            return jsonify({"code": 401, "message": "Car is already booked"}), 401
         requested_car.availability = "Booked"
         db.session.commit()
         return jsonify({"code": 200, "message": "Car has been booked successfully.", "vehicle_id": requested_vehicle_id}), 200
