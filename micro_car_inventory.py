@@ -187,6 +187,12 @@ def after_car_status_change(mapper, connection, target):
             'message': "The car you were waiting for is now available."
         }
         send_message_to_queue(json.dumps(message))
+    else:
+        message = {
+            'car_id': target.vehicle_id,
+            'message': "Someone has booked the car"
+        }
+        send_message_to_queue(json.dumps(message))
 
 # Attach the event listener to the Car model
 event.listen(Cars, 'after_update', after_car_status_change)
