@@ -59,7 +59,19 @@ services:
           - POST
           - PUT
           - GET
-          - OPTIONS          
+          - OPTIONS     
+
+  - name: endtrip
+    url: http://car_inventory:5000/end_trip
+    routes:
+      - name: ENDTRIP
+        paths:
+          - /jomletsgo/endtrip
+        methods:
+          - POST
+          - PUT
+          - GET
+          - OPTIONS 
 
 plugins:
   - name: cors
