@@ -70,9 +70,9 @@ def find_by_userID(user_id):
 @app.route("/user", methods=['POST'])
 def create_user():
     data = request.get_json()
-    email = data["emailAddress"]
+    email = data["email_address"]
     if (db.session.scalars(
-      db.select(Users).filter_by(Email_Address = email).
+      db.select(Users).filter_by(email_address = email).
       limit(1)
       ).first()
       ):
