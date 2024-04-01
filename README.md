@@ -15,5 +15,6 @@
 
 8. You can use JomLetsGo.html to tests the services through our frontend interface.
 
-9. To access Grafana dashboard, username and password will be admin for both. Import the dashboard configurations in 
-./insfrastructure/grafana/dashboard.json
+9. To access Grafana dashboard, username and password will be admin for both. 
+
+10. Create a dashboard in Grafana and enter the ID - 9688 to create the dashboard.
