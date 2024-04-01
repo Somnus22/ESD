@@ -11,7 +11,7 @@ port = 5672            # default port
 
 
 # function to create a connection to the broker
-def create_connection(max_retries=12, retry_interval=5):
+def create_connection(max_retries=50, retry_interval=5):
     print('amqp_connection: Create_connection')
     
     retries = 0
@@ -37,7 +37,7 @@ def create_connection(max_retries=12, retry_interval=5):
             print(f"amqp_connection: Failed to connect: {e}")
             retries += 1
             print(f"amqp_connection: Retrying in {retry_interval} seconds...")
-            time.sleep(retry_interval)
+            time.sleep(retry_interval)  
     
     if connection is None:
         raise Exception("Unable to establish a connection to RabbitMQ after multiple attempts")

@@ -16,7 +16,7 @@ metrics = PrometheusMetrics(app)
 
 r_queue_name = 'Request_Car'
 exchangename = "notifications_exchange"
-exchangetype="topic"
+exchangetype= "direct"
 car_inventory_URL = environ.get("car_inventory_URL") or "http://localhost:5000/cars"
 user_URL = environ.get("user_URL") or 'http://localhost:5001/user'
 
@@ -60,7 +60,7 @@ def send_simple_message(vehicle_id):
     try:
         for email in arr_of_emails:
             print(get_user_details)
-            email_message = f"The car {vehicle_id} you wanted to book is now available. Hurry up and book now!"
+            email_message = f"The car with vehicle id: {vehicle_id}, that you wanted to book is now available. Hurry up and book now!"
             response = requests.post(
                 "https://api.mailgun.net/v3/sandboxcefaa164afc34eba9933f7f63752ee7f.mailgun.org/messages",
                 auth=("api", "a54c5ed81fe292a752f7cfd3f62c0c79-b02bcf9f-b48c4038"),

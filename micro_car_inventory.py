@@ -9,7 +9,7 @@ from sqlalchemy import event
 from os import environ
 from sqlalchemy import  Numeric
 from prometheus_flask_exporter import PrometheusMetrics
-
+import sys
 
 app = Flask(__name__)
 CORS(app)
@@ -19,6 +19,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 metrics = PrometheusMetrics(app)
+#create a connection and a channel to the broker to publish messages to activity_log, error queues
+connection = amqp_connection.create_connection()
+channel = connection.channel()
+r_queue_name = 'Request_Car'
+exchangename = "notifications_exchange"
+exchangetype= "direct"
+
+#if the exchange is not yet created, exit the program
+if not amqp_connection.check_exchange(channel, exchangename, exchangetype):
+    print("\nCreate the 'Exchange' before running this microservice. \nExiting the program.")
+    sys.exit(0)  # Exit with a success status
+
 
 class Cars(db.Model):
     __tablename__ = 'Cars'
@@ -192,12 +204,6 @@ def after_car_status_change(mapper, connection, target):
             'message': "The car you were waiting for is now available."
         }
         send_message_to_queue(json.dumps(message))
-    else:
-        message = {
-            'car_id': target.vehicle_id,
-            'message': "Someone has booked the car"
-        }
-        send_message_to_queue(json.dumps(message))
 
 # Attach the event listener to the Car model
 event.listen(Cars, 'after_update', after_car_status_change)
@@ -225,42 +231,12 @@ def wait_for_availability():
 
 def send_message_to_queue(message):
     try:
-        channel = amqp_connection.create_connection().channel()
-        channel.basic_publish(exchange=exchangename, routing_key="car.request", body=json.dumps(message))
+        # channel = amqp_connection.create_connection().channel()
+        channel.basic_publish(exchange=exchangename, routing_key="car.request", body=json.dumps(message), properties=pika.BasicProperties(delivery_mode = 2))
         return jsonify({"status": "success"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-r_queue_name = 'Request_Car'
 
-exchangename = "notifications_exchange"
-exchangetype = "topic"
-
-def receiveNotifications(channel):
-    
-    try:
-        # set up a consumer and start to wait for coming messages
-        channel.basic_consume(queue=r_queue_name, on_message_callback=callback, auto_ack=True)
-        print('Notifications: Consuming from queue:', r_queue_name)
-        channel.start_consuming()  # an implicit loop waiting to receive messages;
-            #it doesn't exit by default. Use Ctrl+C in the command window to terminate it.
-        if(r_queue_name == "Request_Car"):
-            book_car(r_queue_name)
-    
-    except pika.exceptions.AMQPError as e:
-        print(f"Notifications: Failed to connect: {e}") # might encounter error if the exchange or the queue is not created
-
-    except KeyboardInterrupt:
-        print("Notifications: Program interrupted by user.") 
-
-def callback(channel, method, properties, body): # required signature for the callback; no return
-    print("\nNotifications: Received a Notification by " + __file__)
-    processNotifications(json.loads(body))
-    print()
-    
-def processNotifications(notifications):
-    print("Notifications: Recording notifications:")
-    print(notifications)
     
 @app.route("/end_trip", methods=["POST"])
 def end_trip():
