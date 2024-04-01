@@ -128,7 +128,7 @@ def send_notification():
     print('Car Wait For Availability Result:', car_wait_for_availability)
   
 
-    # Check the order result; if a failure, send it to the error microservice.
+    # Check the order result; if a failure, sen it to the error microservice.
     code = car_wait_for_availability["code"]
     message = json.dumps(car_wait_for_availability)
 

@@ -16,7 +16,7 @@ INSERT INTO Users (user_id, name, phone_number, email_address) VALUES
 (3, 'Teo Yong Ray', '+65 8765 4321', 'YongRay@example.com'),
 (4, 'William Tan', '+65 7654 3210', 'Weel@example.com'),
 (5, 'Jerome Lee', '+65 6543 2109', 'JeromeLee@example.com'),
-(6, 'Dominic Jovin', '+65 5432 1098', 'Dom@example.com'),
+(6, 'Dominic Jovin', '+65 5432 1098', 'dominicjovin7@gmail.com'),
 (7, 'David Afvilla Kumar', '+65 4321 0987', 'Davidee@example.com'),
 (8, 'S. Iswaran', '+65 3210 9876', 'getcharged@example.com'),
 (9, 'Lily Kong', '+65 2109 8765', 'smuboss@example.com'),
