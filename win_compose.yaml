@@ -27,6 +27,7 @@ services:
       POSTGRES_DB: kong
       POSTGRES_USER: kong
       POSTGRES_PASSWORD: password
+      TZ: Asia/Singapore      
     ports:
       - "5432:5432"
     healthcheck:
@@ -52,6 +53,7 @@ services:
       KONG_PG_HOST: kong-database
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: password
+      TZ: Asia/Singapore      
     depends_on:
       - kong-database
 
@@ -76,6 +78,7 @@ services:
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
       KONG_ADMIN_GUI_URL: http://localhost:8002
+      TZ: Asia/Singapore      
     depends_on:
       - kong-migration
     ports: # https://docs.konghq.com/gateway/latest/production/networking/default-ports/
@@ -100,7 +103,8 @@ services:
     image: grafana/grafana-oss:10.2.3
     restart: always
     environment:
-      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      TZ: Asia/Singapore      
     networks:
       - jomletsgo
     ports:
@@ -116,13 +120,15 @@ services:
     restart: always
     networks:
       - jomletsgo
+    environment:
+      TZ: Asia/Singapore      
     ports:
       - "9090:9090"
     volumes:
       - prometheusdata:/etc/prometheus   
       - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./infrastructure/prometheus/metrics.json:/etc/prometheus/metrics.json
-
+          
   ####################################
   # RabbitMQ: The messaging broker   
   ####################################
@@ -130,6 +136,8 @@ services:
     image: rabbitmq:3-management
     hostname: esd-rabbit
     restart: always
+    environment:
+      TZ: Asia/Singapore
     networks:
       - jomletsgo
     ports:
