@@ -174,7 +174,7 @@
                     <h5>No booking found</h5>
                 </div>
             </div>
-            <div v-else class="ms-2 mt-3">
+            <div v-else class="ms-3 mt-4">
                 <div>
                     <h5>Your booking details are as follows: </h5>
                     <p>Brand: {{bookedCar.brand}}</p>
@@ -185,12 +185,12 @@
                     <p>Address: {{bookedCar.address}}</p> <!-- Placeholder -->
                     <p>Booking Date and Time: {{bookedCar.bookingTime}}</p> 
                 </div>
-                <div v-if="reportStarted == false">
-                    <h5 class="ms-3 pt-4">Have any issues with the car?</h5>
+                <div v-if="reportStarted == false" class="mt-4">
+                    <h5 class=>Have any issues with the car?</h5>
                     <button class="btn btn-primary ms-3" @click="reportStarted=true">Create damage report</button>
                 </div>
                 <!--If car selected and booked for report-->
-                <div v-else-if="reportMade == false && reportStarted == true" style="padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                <div v-else-if="reportMade == false && reportStarted == true">
                     <h2 class="mb-4">Report</h2>
                     <div class="mb-4" v-for="damage in damages" :key="damage.id">
                         <label :for="'damage' + damage.id + 'Description'" style="display: block; margin-bottom: 5px;">Damage {{damage.id}}</span> Description:</label>
@@ -266,7 +266,7 @@
             data: {
                 carsList: [],
                 filter: false,
-                userId: 2, // assume we know userId
+                userId: 6, // assume we know userId
                 distanceSortOrder: 'ascending',
                 priceSortOrder: "",
                 typeOptions: [],
