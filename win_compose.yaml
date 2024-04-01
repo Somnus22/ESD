@@ -155,7 +155,7 @@ services:
     environment:
       rabbit_host: rabbitmq
       rabbit_port: 5672
-      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/Cars
+      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/Cars
       #dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/Cars
 
       PYTHONUNBUFFERED: 1
@@ -176,7 +176,7 @@ services:
     networks:
       - jomletsgo    
     environment:
-      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/rental_log
+      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/rental_log
       #dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/rental_log
 
       PYTHONUNBUFFERED: 1
@@ -196,7 +196,7 @@ services:
       - jomletsgo    
     environment:
 
-      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/report
+      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/report
       #dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/report
 
       PYTHONUNBUFFERED: 1
@@ -215,7 +215,7 @@ services:
     networks:
       - jomletsgo    
     environment:
-      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/users
+      dbURL: mysql+mysqlconnector://root@host.docker.internal:3306/users
     # dbURL: mysql+mysqlconnector://root:root@host.docker.internal:8889/users
 
       PYTHONUNBUFFERED: 1
