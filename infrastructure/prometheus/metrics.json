@@ -7,13 +7,6 @@
       }
   },
   {
-      "targets": ["notifications:5004"],
-      "labels": {
-          "env": "dev",
-          "job": "docker"
-      }
-  },
-  {
       "targets": ["car_search:5100"],
       "labels": {
           "env": "dev",
