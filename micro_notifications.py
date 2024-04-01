@@ -171,7 +171,7 @@ def send_notification():
 
 def run_flask_app():
     print("This is flask " + os.path.basename(__file__) + " for sending notifications...")
-    app.run(host="0.0.0.0", debug= True, port=5004)
+    app.run(host="0.0.0.0", debug= False, port=5004)
 
 if __name__ == "__main__":
     # Start Flask app in another thread
